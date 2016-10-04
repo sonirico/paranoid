@@ -1,0 +1,39 @@
+/* 
+ * File:   Animation.cpp
+ * Author: sheldor
+ * 
+ * Created on 5 de abril de 2014, 13:19
+ */
+
+
+#include "Animation.hpp"
+
+Animation::Animation() : m_texture(NULL)
+{
+
+}
+
+void Animation::addFrame(sf::IntRect rect)
+{
+    m_frames.push_back(rect);
+}
+
+void Animation::setSpriteSheet(const sf::Texture& texture)
+{
+    m_texture = &texture;
+}
+
+const sf::Texture* Animation::getSpriteSheet() const
+{
+    return m_texture;
+}
+
+std::size_t Animation::getSize() const
+{
+    return m_frames.size();
+}
+
+const sf::IntRect& Animation::getFrame(std::size_t n) const
+{
+    return m_frames[n];
+}
