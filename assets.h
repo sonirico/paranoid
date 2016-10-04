@@ -1,6 +1,6 @@
 /* 
  * File:   assets.h
- * Author: sheldor
+ * Author: sonirico
  *
  * Created on 22 de marzo de 2014, 0:56
  */
