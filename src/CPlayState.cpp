@@ -268,6 +268,19 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
     this->active_bonus = game::game_bonus::COUNT;
     this->bonus_time_left = 0;
 
+    game::game_fx::fx pickup_sound = game::game_fx::OPTION;
+
+    if (type == X)
+    {
+        pickup_sound = game::game_fx::LIFEUP;
+    }
+    else if (type == C)
+    {
+        pickup_sound = game::game_fx::STICKY;
+    }
+
+    this->gc->play_fx(pickup_sound);
+
     switch (type)
     {
     case E:

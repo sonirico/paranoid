@@ -17,7 +17,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Sticky atrapa la bola donde impactó (offset sobre la pala) en vez de recentrarla
 - [x] Input de ratón para la pala (absoluto, click = Espacio) + teclado a 550 px/s
 - [x] Sonido al perder la bola (`media/fx/muerte.wav`)
-- [ ] Sonido al coger cápsulas (`option.wav`, `points.wav`, `lifeup.wav`, `sticky.wav`, sin usar)
+- [x] Sonido al coger cápsulas (X→`lifeup.wav`, C→`sticky.wav`, resto→`option.wav`; `points.wav` reservado para el score)
 - [ ] Pausa real: Escape no debe cerrar el juego en seco
 
 ## Nivel 2 — Estructura de juego
