@@ -31,10 +31,13 @@ class CGameContainer
 
     void play_fx(game::game_fx::fx id);
 
-    // Switches the looping background track; asking for the track that
-    // is already playing is a no-op.
-    void play_music(const std::string& path);
+    // Switches the background track; asking for the track that is
+    // already playing is a no-op. Non-looping tracks play once (jingles).
+    void play_music(const std::string& path, bool looping);
     void stop_music();
+
+    // Length in seconds of the last loaded track; 0 when none.
+    float get_music_duration() const;
 
     // Volumes in the 0..100 range; setters clamp, apply and persist.
     float get_music_volume() const;

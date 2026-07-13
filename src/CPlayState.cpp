@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <limits>
 #include <string>
 
 using namespace game::game_states;
@@ -51,20 +52,29 @@ void CPlayState::play_stage_music()
     // Few tracks: cycle the backgrounds; the menu theme moonlights too.
     const char* tracks[] = {"media/music/crystalhammer.ogg", "media/music/arkanoid.ogg"};
 
-    this->gc->play_music(tracks[current_stage % 2]);
+    this->gc->play_music(tracks[current_stage % 2], true);
 }
 
 void CPlayState::enter_intro(bool show_round)
 {
     this->phase = Phase::Intro;
-    this->phase_time = show_round ? ROUND_INTRO_DURATION : READY_DURATION;
     this->intro_shows_round = show_round;
 
-    // Stage starts open on the round jingle; the background track
-    // takes over once play begins. Respawns keep the music running.
     if (show_round)
     {
-        this->gc->play_music("media/music/stage.ogg");
+        // Stage starts open on the round jingle, played once; the card
+        // holds until it ends plus a beat, then the background track
+        // takes over. Without a jingle (tests) use the fixed fallback.
+        this->gc->play_music("media/music/stage.ogg", false);
+
+        const float jingle = this->gc->get_music_duration();
+
+        this->phase_time = jingle > 0 ? jingle + 1.f : ROUND_INTRO_DURATION;
+    }
+    else
+    {
+        // Respawns show a short READY and keep the music running.
+        this->phase_time = READY_DURATION;
     }
 }
 
@@ -460,6 +470,12 @@ void CPlayState::render_active_bonus()
     case N:
         name = "NET";
         break;
+    case S:
+        name = "SLOW";
+        break;
+    case P:
+        name = "FAST";
+        break;
     default:
         return;
     }
@@ -582,6 +598,13 @@ void CPlayState::spawn_ball()
     b->set_pierce(this->active_bonus == game::game_bonus::M);
     b->set_net(this->active_bonus == game::game_bonus::N);
 
+    if (this->ball_speed_factor != 1.f)
+    {
+        b->scale_velocity(this->ball_speed_factor);
+    }
+
+    b->snapshot();
+
     this->balls.push_back(std::move(b));
 }
 
@@ -658,14 +681,27 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
         const unsigned int MAX_BALLS = 8;
         const float SPLIT_ANGLE = 25.f * 3.14159265f / 180.f;
 
+        // Split the flying ball nearest the paddle: with several in
+        // play it is the one the player is actually tracking.
         CBall* source = nullptr;
+        float best_distance = std::numeric_limits<float>::max();
+
+        const engine::Vec2f paddle_center =
+            this->paddle->getPosition() + this->paddle->get_size() * 0.5f;
 
         for (auto& ball : this->balls)
         {
-            if (!ball->is_in_paddle())
+            if (ball->is_in_paddle())
             {
+                continue;
+            }
+
+            const float distance = (ball->getPosition() - paddle_center).length();
+
+            if (distance < best_distance)
+            {
+                best_distance = distance;
                 source = ball.get();
-                break;
             }
         }
 
@@ -698,21 +734,29 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
             twin->setPosition(source->getPosition());
             twin->set_velocity({v.x * c - v.y * s, v.x * s + v.y * c});
 
+            // Seed the render interpolation so the twin's first frame
+            // draws exactly where it was born.
+            twin->snapshot();
+
             this->balls.push_back(std::move(twin));
         }
         break;
     }
     case S:
+        this->ball_speed_factor = 0.7f;
         for (auto& ball : this->balls)
         {
-            ball->scale_velocity(0.7f);
+            ball->scale_velocity(this->ball_speed_factor);
         }
+        this->arm_active_bonus(type);
         break;
     case P:
+        this->ball_speed_factor = 1.3f;
         for (auto& ball : this->balls)
         {
-            ball->scale_velocity(1.3f);
+            ball->scale_velocity(this->ball_speed_factor);
         }
+        this->arm_active_bonus(type);
         break;
     case X:
         this->lives++;
@@ -769,7 +813,15 @@ void CPlayState::cancel_active_bonus()
     {
         ball->set_pierce(false);
         ball->set_net(false);
+
+        // Undo a slow/fast capsule: this game stays arcade-quick.
+        if (this->ball_speed_factor != 1.f)
+        {
+            ball->scale_velocity(1.f / this->ball_speed_factor);
+        }
     }
+
+    this->ball_speed_factor = 1.f;
 
     this->active_bonus = game::game_bonus::COUNT;
     this->bonus_time_left = 0;

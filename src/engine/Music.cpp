@@ -82,7 +82,7 @@ void Music::stop()
 
 void Music::update()
 {
-    if (!m_stream || !m_samples)
+    if (!m_stream || !m_samples || !m_looping)
     {
         return;
     }
@@ -94,6 +94,16 @@ void Music::update()
     {
         SDL_PutAudioStreamData(m_stream, m_samples, total);
     }
+}
+
+void Music::setLooping(bool looping)
+{
+    m_looping = looping;
+}
+
+float Music::getDuration() const
+{
+    return m_spec.freq > 0 ? static_cast<float>(m_frames) / m_spec.freq : 0.f;
 }
 
 std::uint32_t Music::getSampleCount() const

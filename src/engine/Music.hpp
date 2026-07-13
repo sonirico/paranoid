@@ -32,6 +32,12 @@ class Music
     void stop();
     void update();
 
+    // A non-looping track plays once and drains (e.g. jingles).
+    void setLooping(bool looping);
+
+    // Track length in seconds; 0 before a successful load.
+    float getDuration() const;
+
     std::uint32_t getSampleCount() const;
 
   private:
@@ -42,6 +48,7 @@ class Music
     SDL_AudioSpec m_spec{};
     short* m_samples = nullptr;
     std::uint32_t m_frames = 0;
+    bool m_looping = true;
 
     SDL_AudioStream* m_stream = nullptr;
 };

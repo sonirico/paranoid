@@ -41,9 +41,9 @@ no input is faster than another.
 | ![L](docs/capsules/l.png) | **Laser** (timed) - the paddle fires with Space |
 | ![M](docs/capsules/m.png) | **Megaball** (timed) - the ball smashes through bricks without bouncing |
 | ![N](docs/capsules/n.png) | **Net** (timed) - a barrier on the floor bounces the ball back |
-| ![P](docs/capsules/p.png) | **Speed up** - faster balls |
+| ![P](docs/capsules/p.png) | **Speed up** (timed) - faster balls |
 | ![R](docs/capsules/r.png) | **Reduce** (timed) - narrower paddle |
-| ![S](docs/capsules/s.png) | **Slow** - slower balls |
+| ![S](docs/capsules/s.png) | **Slow** (timed) - slower balls |
 | ![T](docs/capsules/t.png) | **Twist** (timed) - a moving paddle puts spin on the ball (Magnus curve) |
 | ![X](docs/capsules/x.png) | **Extra life** |
 

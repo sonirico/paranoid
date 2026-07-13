@@ -241,9 +241,16 @@ TEST_F(PlayStateTest, AnyCapsuleCancelsTheActiveBonus)
     play_state->apply_bonus(game::game_bonus::L);
     ASSERT_TRUE(play_state->get_paddle()->has_laser());
 
+    // Slow is a timed mode itself now: it cancels the laser and takes
+    // over as the active capsule.
     play_state->apply_bonus(game::game_bonus::S);
 
     EXPECT_FALSE(play_state->get_paddle()->has_laser());
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::S);
+
+    // A one-shot capsule (extra life) cancels it and arms nothing.
+    play_state->apply_bonus(game::game_bonus::X);
+
     EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::COUNT);
 }
 
@@ -519,6 +526,21 @@ TEST_F(PlayStateTest, BrickHitConsumesExactlyOneLife)
     EXPECT_EQ(play_state->get_bricks().size(), 1u);
 }
 
+TEST_F(PlayStateTest, DisruptionTwinsSpawnOnTheSourceBall)
+{
+    CBall* source = launchBall({300.f, 200.f}, {200.f, -200.f});
+
+    play_state->apply_bonus(game::game_bonus::D);
+
+    ASSERT_EQ(play_state->get_balls().size(), 3u);
+
+    for (auto& ball : play_state->get_balls())
+    {
+        EXPECT_FLOAT_EQ(ball->getPosition().x, source->getPosition().x);
+        EXPECT_FLOAT_EQ(ball->getPosition().y, source->getPosition().y);
+    }
+}
+
 TEST_F(PlayStateTest, MultiballBonusSplitsBallInThree)
 {
     ASSERT_EQ(play_state->get_balls().size(), 1u);
@@ -544,6 +566,39 @@ TEST_F(PlayStateTest, SlowBonusReducesBallSpeed)
     play_state->apply_bonus(game::game_bonus::S);
 
     EXPECT_LT(std::abs(play_state->get_balls().front()->get_velocity().x), std::abs(before));
+}
+
+TEST_F(PlayStateTest, SlowBonusWearsOffRestoringTheBaseSpeed)
+{
+    // Horizontal flight below the wall and above the paddle: the ball
+    // only bounces off side walls, so its speed stays observable.
+    CBall* ball = launchBall({400.f, 400.f}, {300.f, 0.f});
+
+    play_state->apply_bonus(game::game_bonus::S);
+
+    ASSERT_NEAR(ball->get_velocity().length(), 210.f, 1.f);
+
+    const int ticks = static_cast<int>(CPlayState::BONUS_DURATION / game::TIME_PER_FRAME) + 1;
+
+    for (int i = 0; i < ticks; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_NEAR(ball->get_velocity().length(), 300.f, 1.f);
+}
+
+TEST_F(PlayStateTest, AnyCapsuleRestoresACapsuledBallSpeed)
+{
+    CBall* ball = launchBall({400.f, 400.f}, {300.f, 0.f});
+
+    play_state->apply_bonus(game::game_bonus::P);
+
+    ASSERT_NEAR(ball->get_velocity().length(), 390.f, 1.f);
+
+    play_state->apply_bonus(game::game_bonus::E);
+
+    EXPECT_NEAR(ball->get_velocity().length(), 300.f, 1.f);
 }
 
 TEST_F(PlayStateTest, SpeedBonusIncreasesBallSpeed)

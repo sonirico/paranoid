@@ -42,7 +42,7 @@ void CGameContainer::events()
     }
 }
 
-void CGameContainer::play_music(const std::string& path)
+void CGameContainer::play_music(const std::string& path, bool looping)
 {
     if (this->music == nullptr || this->current_music == path)
     {
@@ -53,6 +53,7 @@ void CGameContainer::play_music(const std::string& path)
     {
         this->current_music = path;
 
+        this->music->setLooping(looping);
         this->music->setVolume(this->music_volume);
         this->music->play();
     }
@@ -60,6 +61,11 @@ void CGameContainer::play_music(const std::string& path)
     {
         SDL_Log("Music %s failed to load, continuing without it", path.c_str());
     }
+}
+
+float CGameContainer::get_music_duration() const
+{
+    return this->music != nullptr ? this->music->getDuration() : 0.f;
 }
 
 void CGameContainer::stop_music()

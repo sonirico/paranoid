@@ -509,4 +509,12 @@ void CBall::scale_velocity(float factor)
 {
     this->velocity *= factor;
     this->vel *= factor;
+
+    // Undoing a slow capsule after the ramp maxed out may not push the
+    // ball past the cap.
+    if (this->vel > MAX_VEL)
+    {
+        this->velocity *= MAX_VEL / this->vel;
+        this->vel = MAX_VEL;
+    }
 }

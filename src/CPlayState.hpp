@@ -65,7 +65,8 @@ class CPlayState : public CState
     // How long a mode capsule stays in effect before wearing off.
     static constexpr float BONUS_DURATION = 10.f;
 
-    // Long enough for the 3.3 s round jingle to finish plus a beat.
+    // Fallback length of the round card when no jingle could load; with
+    // one, the card lasts the jingle plus a one-second beat.
     static constexpr float ROUND_INTRO_DURATION = 4.f;
 
     // Applies a collected bonus capsule to the game.
@@ -170,6 +171,9 @@ class CPlayState : public CState
 
     game::game_bonus::bonus active_bonus = game::game_bonus::COUNT;
     float bonus_time_left = 0;
+
+    // Speed scaling from a slow/fast capsule (S/P), undone on cancel.
+    float ball_speed_factor = 1.f;
 
     // A break capsule (B) was caught: jump stages once the bonus pass
     // finishes, so the capsule list is not cleared mid-iteration.
