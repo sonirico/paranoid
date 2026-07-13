@@ -30,6 +30,11 @@ void CGameContainer::events()
             this->window->close();
             break;
         }
+
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_F11 && !event.key.repeat)
+        {
+            this->window->setFullscreen(!this->window->isFullscreen());
+        }
     }
 }
 

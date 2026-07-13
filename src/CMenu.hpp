@@ -23,6 +23,9 @@ class CMenu
 
     int get_selected() const;
 
+    // Rewrites an entry's label, e.g. to reflect a toggled setting.
+    void set_entry(unsigned int i, std::string entry);
+
   private:
     void move_selection(int delta);
 

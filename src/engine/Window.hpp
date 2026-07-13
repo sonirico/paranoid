@@ -16,6 +16,14 @@ namespace engine
 class Window
 {
   public:
+    // How the fixed-size game view maps onto the window when their
+    // sizes differ (fullscreen, resizes).
+    enum class ScaleMode
+    {
+        Letterbox,
+        Stretch
+    };
+
     Window(const std::string& title, int width, int height);
     ~Window();
 
@@ -24,6 +32,16 @@ class Window
 
     bool isOpen() const;
     void close();
+
+    void setFullscreen(bool enabled);
+    bool isFullscreen() const;
+
+    void setScaleMode(ScaleMode mode);
+    ScaleMode getScaleMode() const;
+
+    // The cursor in game coordinates, regardless of window size,
+    // fullscreen or letterbox bars.
+    Vec2f getMousePosition() const;
 
     void clear(const Color& color = Color::Black);
     void draw(const Drawable& drawable);
@@ -45,6 +63,11 @@ class Window
     SDL_Renderer* m_renderer = nullptr;
     bool m_open = false;
     float m_frame_alpha = 1.f;
+
+    int m_width = 0;
+    int m_height = 0;
+    bool m_fullscreen = false;
+    ScaleMode m_scale_mode = ScaleMode::Letterbox;
 };
 
 } // namespace engine

@@ -24,7 +24,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 
 - [x] Render de texto: bitmap font 8x8 (`engine::BitmapFont` + `engine::Text`, `media/textures/font.png`)
 - [x] Estado de menú (Play / Options / Quit, Options aún "coming soon"); Escape abre menú de pausa (Resume / Main menu / Quit) sin perder la partida
-- [ ] Fullscreen (F11) con modo letterbox (respeta aspecto) / stretch configurable
+- [x] Fullscreen (F11 o desde Options) con letterbox/stretch configurable en Options
 - [ ] Score + HUD (puntos por ladrillo/bonus) y high score persistido
 - [ ] Transiciones: "Round N — Ready", pantalla de game over, stage clear
 

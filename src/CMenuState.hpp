@@ -7,7 +7,8 @@
 
 class CGameContainer;
 
-// The main menu screen: Play / Options / Quit.
+// The main menu screen: Play / Options / Quit, with the options page
+// (scale mode, fullscreen) one level in.
 class CMenuState : public CState
 {
   public:
@@ -20,8 +21,12 @@ class CMenuState : public CState
     void clear() override;
 
   private:
-    std::unique_ptr<CMenu> menu;
+    // Rewrites the options entries from the window's current settings.
+    void refresh_options();
 
-    // Options has nothing to configure yet; selecting it says so.
-    bool coming_soon = false;
+    std::unique_ptr<CMenu> menu;
+    std::unique_ptr<CMenu> options_menu;
+
+    bool in_options = false;
+    bool esc_was_down = false;
 };

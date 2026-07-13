@@ -31,15 +31,15 @@ int CMenu::update()
     this->up_was_down = up;
     this->down_was_down = down;
 
-    float mouse_x = 0.f;
-    float mouse_y = 0.f;
-    const bool click = SDL_GetMouseState(&mouse_x, &mouse_y) & SDL_BUTTON_LMASK;
+    // In game coordinates, so fullscreen and letterbox don't skew it.
+    const engine::Vec2f mouse = this->gc->window->getMousePosition();
+    const bool click = SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK;
 
-    if (mouse_x != this->last_mouse.x || mouse_y != this->last_mouse.y)
+    if (mouse.x != this->last_mouse.x || mouse.y != this->last_mouse.y)
     {
-        this->last_mouse = {mouse_x, mouse_y};
+        this->last_mouse = mouse;
 
-        const int hovered = this->entry_at(mouse_x, mouse_y);
+        const int hovered = this->entry_at(mouse.x, mouse.y);
 
         if (hovered >= 0 && hovered != this->selected)
         {
@@ -62,7 +62,7 @@ int CMenu::update()
 
     if (click && !this->click_was_down)
     {
-        const int under = this->entry_at(mouse_x, mouse_y);
+        const int under = this->entry_at(mouse.x, mouse.y);
 
         if (under >= 0)
         {
@@ -112,6 +112,11 @@ void CMenu::render()
 int CMenu::get_selected() const
 {
     return this->selected;
+}
+
+void CMenu::set_entry(unsigned int i, std::string entry)
+{
+    this->entries[i] = std::move(entry);
 }
 
 void CMenu::move_selection(int delta)

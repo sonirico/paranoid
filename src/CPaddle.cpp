@@ -1,5 +1,6 @@
 #include "CPaddle.hpp"
 
+#include "CGameContainer.hpp"
 #include "CResourceHolder.hpp"
 
 #include <SDL3/SDL.h>
@@ -141,8 +142,8 @@ bool CPaddle::has_spin() const
 
 void CPaddle::check_mouse(const float dt)
 {
-    float mouse_x = 0.f;
-    SDL_GetMouseState(&mouse_x, nullptr);
+    // In game coordinates, so fullscreen and letterbox don't skew it.
+    const float mouse_x = this->state->gc->window->getMousePosition().x;
 
     // First reading only records the position: the paddle must not jump to
     // wherever the cursor happens to be at startup.

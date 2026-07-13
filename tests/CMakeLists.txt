@@ -9,6 +9,7 @@ add_executable(paranoid_tests
     sprite_test.cpp
     text_test.cpp
     texture_test.cpp
+    window_test.cpp
     sound_test.cpp
     music_test.cpp
     stage_map_test.cpp

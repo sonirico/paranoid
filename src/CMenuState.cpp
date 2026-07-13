@@ -3,6 +3,8 @@
 #include "CGameContainer.hpp"
 #include "engine/Text.hpp"
 
+#include <SDL3/SDL.h>
+
 using namespace game::game_states;
 
 CMenuState::CMenuState(CGameContainer* gc)
@@ -15,23 +17,61 @@ void CMenuState::init()
 {
     this->menu = std::make_unique<CMenu>(
         this->gc, std::vector<std::string>{"PLAY", "OPTIONS", "QUIT"}, game::WIDTH / 2.f, 300.f);
+
+    this->options_menu = std::make_unique<CMenu>(this->gc, std::vector<std::string>{"", "", "BACK"},
+                                                 game::WIDTH / 2.f, 300.f);
+
+    this->refresh_options();
 }
 
 void CMenuState::events() {}
 
 int CMenuState::update(const float dt)
 {
-    switch (this->menu->update())
+    const bool* keys = SDL_GetKeyboardState(nullptr);
+    const bool esc = keys[SDL_SCANCODE_ESCAPE];
+
+    if (esc && !this->esc_was_down && this->in_options)
+    {
+        this->in_options = false;
+    }
+    this->esc_was_down = esc;
+
+    if (!this->in_options)
+    {
+        switch (this->menu->update())
+        {
+        case 0:
+            return PLAY;
+        case 1:
+            this->in_options = true;
+            break;
+        case 2:
+            this->gc->window->close();
+            break;
+        }
+
+        return NULLSTATE;
+    }
+
+    switch (this->options_menu->update())
     {
     case 0:
-        return PLAY;
+        this->gc->window->setScaleMode(this->gc->window->getScaleMode() ==
+                                               engine::Window::ScaleMode::Letterbox
+                                           ? engine::Window::ScaleMode::Stretch
+                                           : engine::Window::ScaleMode::Letterbox);
+        break;
     case 1:
-        this->coming_soon = true;
+        this->gc->window->setFullscreen(!this->gc->window->isFullscreen());
         break;
     case 2:
-        this->gc->window->close();
+        this->in_options = false;
         break;
     }
+
+    // F11 can also flip the fullscreen under us: mirror reality every tick.
+    this->refresh_options();
 
     return NULLSTATE;
 }
@@ -48,21 +88,24 @@ void CMenuState::render()
 
     this->gc->window->draw(title);
 
-    this->menu->render();
-
-    if (this->coming_soon)
+    if (this->in_options)
     {
-        engine::Text note;
-        note.setFont(this->gc->font);
-        note.setString("COMING SOON");
-        note.setScale({2.f, 2.f});
-        note.setColor(engine::Color::Yellow);
-
-        const engine::FloatRect note_bounds = note.getGlobalBounds();
-        note.setPosition((game::WIDTH - note_bounds.width) / 2, 500.f);
-
-        this->gc->window->draw(note);
+        this->options_menu->render();
     }
+    else
+    {
+        this->menu->render();
+    }
+}
+
+void CMenuState::refresh_options()
+{
+    const bool letterbox = this->gc->window->getScaleMode() == engine::Window::ScaleMode::Letterbox;
+
+    this->options_menu->set_entry(0,
+                                  std::string("SCALE: ") + (letterbox ? "LETTERBOX" : "STRETCH"));
+    this->options_menu->set_entry(1, std::string("FULLSCREEN: ") +
+                                         (this->gc->window->isFullscreen() ? "ON" : "OFF"));
 }
 
 void CMenuState::clear() {}

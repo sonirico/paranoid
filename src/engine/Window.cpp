@@ -5,7 +5,7 @@
 namespace engine
 {
 
-Window::Window(const std::string& title, int width, int height)
+Window::Window(const std::string& title, int width, int height) : m_width(width), m_height(height)
 {
     if (!SDL_CreateWindowAndRenderer(title.c_str(), width, height, 0, &m_window, &m_renderer))
     {
@@ -15,6 +15,10 @@ Window::Window(const std::string& title, int width, int height)
 
     // Cap the frame rate to the display's refresh instead of busy-looping.
     SDL_SetRenderVSync(m_renderer, 1);
+
+    // The game always renders at its fixed size; SDL maps it onto
+    // whatever the window really measures.
+    setScaleMode(m_scale_mode);
 
     m_open = true;
 }
@@ -39,6 +43,49 @@ bool Window::isOpen() const
 void Window::close()
 {
     m_open = false;
+}
+
+void Window::setFullscreen(bool enabled)
+{
+    if (SDL_SetWindowFullscreen(m_window, enabled))
+    {
+        m_fullscreen = enabled;
+    }
+}
+
+bool Window::isFullscreen() const
+{
+    return m_fullscreen;
+}
+
+void Window::setScaleMode(ScaleMode mode)
+{
+    const SDL_RendererLogicalPresentation presentation = mode == ScaleMode::Letterbox
+                                                             ? SDL_LOGICAL_PRESENTATION_LETTERBOX
+                                                             : SDL_LOGICAL_PRESENTATION_STRETCH;
+
+    if (SDL_SetRenderLogicalPresentation(m_renderer, m_width, m_height, presentation))
+    {
+        m_scale_mode = mode;
+    }
+}
+
+Window::ScaleMode Window::getScaleMode() const
+{
+    return m_scale_mode;
+}
+
+Vec2f Window::getMousePosition() const
+{
+    float window_x = 0.f;
+    float window_y = 0.f;
+    SDL_GetMouseState(&window_x, &window_y);
+
+    float x = 0.f;
+    float y = 0.f;
+    SDL_RenderCoordinatesFromWindow(m_renderer, window_x, window_y, &x, &y);
+
+    return {x, y};
 }
 
 void Window::clear(const Color& color)
