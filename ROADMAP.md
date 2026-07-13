@@ -39,4 +39,12 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Soporte de gamepad: stick/d-pad mueven la pala, Sur = disparo/activar, Start = pausa; hot-plug
 - [x] Ajustes de volumen (música y fx) en Options, persistidos en `settings`
 - [x] Cheat de la tecla `A` solo en builds con `DEV_MODE` (`make dev`)
-- [x] Editor de mapas: entrada EDITOR en el menú, S guarda / L carga `custom.map`, Espacio vuelca a stdout, Escape vuelve al menú
+- [x] Editor de mapas: entrada EDITOR en el menú, S guarda / L carga `custom.map`, Escape vuelve al menú
+
+## Post-roadmap
+
+- [x] Editor sin pala ni bolas: las flechas solo mueven el selector
+- [x] Música bien estructurada: `stage.ogg` es el jingle de inicio de ronda; al empezar a jugar entra el fondo, ciclando `crystalhammer.ogg`/`arkanoid.ogg` por stage
+- [x] Campo de ladrillos más arriba (`MARGIN_TOP` 100 → 64)
+- [x] Stage nuevo: el monigote de Claude (stage 10)
+- [x] Mapas fuera de `assets.h`: ficheros ASCII-art en `media/stages/*.txt` cargados por `CStageStore`; el editor guarda/carga el mismo formato (adiós al volcado por stdout)

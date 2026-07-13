@@ -1,6 +1,7 @@
 #include "CGameContainer.hpp"
 #include "CPlayState.hpp"
 #include "CResourceHolder.hpp"
+#include "CStageStore.hpp"
 #include "engine/AudioDevice.hpp"
 #include "engine/Music.hpp"
 #include "engine/Window.hpp"
@@ -41,8 +42,12 @@ class PlayStateTest : public ::testing::Test
 
         music = std::make_unique<engine::Music>(*audio);
 
+        stages = std::make_unique<CStageStore>();
+        ASSERT_TRUE(stages->load(TEST_MEDIA_DIR "/stages"));
+
         container =
             std::make_unique<CGameContainer>(window.get(), audio.get(), holder.get(), music.get());
+        container->stages = stages.get();
 
         play_state = std::make_unique<CPlayState>(container.get());
         play_state->init();
@@ -113,6 +118,7 @@ class PlayStateTest : public ::testing::Test
     std::unique_ptr<engine::Window> window;
     std::unique_ptr<engine::AudioDevice> audio;
     std::unique_ptr<engine::Music> music;
+    std::unique_ptr<CStageStore> stages;
     std::unique_ptr<CResourceHolder> holder;
     std::unique_ptr<CGameContainer> container;
     std::unique_ptr<CPlayState> play_state;

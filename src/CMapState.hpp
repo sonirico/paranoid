@@ -1,8 +1,6 @@
 #pragma once
 
-#include "CBall.hpp"
 #include "CBrick.hpp"
-#include "CPaddle.hpp"
 #include "CState.hpp"
 #include "assets.h"
 
@@ -28,13 +26,9 @@ class CMapState : public CState
     void clear() override;
 
   private:
-    void update_balls(const float dt);
     void update_bricks(const float dt);
-    void update_paddle(const float dt);
 
-    void render_balls();
     void render_bricks();
-    void render_paddle();
     void render_status();
 
     // The edited map persists to <data_dir>/custom.map.
@@ -45,9 +39,6 @@ class CMapState : public CState
     void show_status(const std::string& text);
 
   private:
-    std::unique_ptr<CPaddle> paddle;
-
-    std::list<std::unique_ptr<CBall>> balls;
     std::list<std::unique_ptr<CBrick>> bricks;
 
     std::unique_ptr<SSelector> selector;

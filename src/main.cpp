@@ -1,6 +1,7 @@
 #include "CGameContainer.hpp"
 #include "CGameStateManager.hpp"
 #include "CResourceHolder.hpp"
+#include "CStageStore.hpp"
 #include "assets.h"
 #include "engine/AudioDevice.hpp"
 #include "engine/Clock.hpp"
@@ -74,11 +75,21 @@ int main(int argc, char** argv)
         CResourceHolder rh(window.getRenderer());
         load_resources(rh);
 
+        CStageStore stages;
+
+        if (!stages.load("media/stages"))
+        {
+            SDL_Log("No stages could be loaded from media/stages");
+            SDL_Quit();
+            return 1;
+        }
+
         engine::Music music(audio);
         engine::Gamepad gamepad;
 
         CGameContainer gc(&window, &audio, &rh, &music);
         gc.gamepad = &gamepad;
+        gc.stages = &stages;
 
         if (char* pref_path = SDL_GetPrefPath("", "paranoid"))
         {

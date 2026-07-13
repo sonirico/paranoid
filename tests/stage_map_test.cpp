@@ -1,58 +1,70 @@
-#include "other_functions.hpp"
+#include "CStageStore.hpp"
+#include "assets.h"
 
 #include <gtest/gtest.h>
 
-TEST(StageMap, ReturnsMapForValidStage)
+// The shipped stage files, loaded from the real media directory.
+class StageStoreTest : public ::testing::Test
 {
-    const unsigned int* map = get_stage_map(0);
-
-    ASSERT_NE(map, nullptr);
-}
-
-TEST(StageMap, FirstStageHasBricks)
-{
-    const unsigned int* map = get_stage_map(0);
-    ASSERT_NE(map, nullptr);
-
-    unsigned int bricks = 0;
-
-    for (unsigned int i = 0; i < game::game_bricks::BRICKS_PER_LINE * game::game_bricks::LINES; ++i)
+  protected:
+    void SetUp() override
     {
-        if (map[i] != game::game_bricks::NONE)
-        {
-            bricks++;
-        }
+        ASSERT_TRUE(store.load(TEST_MEDIA_DIR "/stages"));
     }
 
-    EXPECT_GT(bricks, 0u);
+    CStageStore store;
+};
+
+TEST_F(StageStoreTest, LoadsElevenStagesFromDisk)
+{
+    EXPECT_EQ(store.count(), 11u);
 }
 
-TEST(StageMap, ReturnsNullForOutOfRangeStage)
+TEST_F(StageStoreTest, EveryStageHasDestructibleBricks)
 {
-    EXPECT_EQ(get_stage_map(game::game_bricks::TOTAL_STAGES), nullptr);
-    EXPECT_EQ(get_stage_map(9999), nullptr);
-}
-
-TEST(StageMap, ReportsWhetherAStageHasBricks)
-{
-    // All ten stages are designed now; only out-of-range is empty.
-    for (unsigned int stage = 0; stage < game::game_bricks::TOTAL_STAGES; ++stage)
+    for (unsigned int stage = 0; stage < store.count(); ++stage)
     {
-        EXPECT_TRUE(stage_has_bricks(stage)) << "stage " << stage;
+        EXPECT_TRUE(store.has_bricks(stage)) << "stage " << stage;
     }
 
-    EXPECT_FALSE(stage_has_bricks(game::game_bricks::TOTAL_STAGES));
+    EXPECT_FALSE(store.has_bricks(store.count()));
 }
 
-TEST(StageMap, AdvancesToNextStageWithBricks)
+TEST_F(StageStoreTest, ServesFullGridsAndRejectsOutOfRange)
 {
-    for (unsigned int stage = 0; stage + 1 < game::game_bricks::TOTAL_STAGES; ++stage)
+    const std::vector<unsigned int>* cells = store.get(0);
+
+    ASSERT_NE(cells, nullptr);
+    EXPECT_EQ(cells->size(), game::game_bricks::BRICKS_PER_LINE * game::game_bricks::LINES);
+
+    EXPECT_EQ(store.get(store.count()), nullptr);
+}
+
+TEST_F(StageStoreTest, AdvancesAndWrapsThroughStages)
+{
+    for (unsigned int stage = 0; stage + 1 < store.count(); ++stage)
     {
-        EXPECT_EQ(next_stage_with_bricks(stage), stage + 1) << "stage " << stage;
+        EXPECT_EQ(store.next_stage_with_bricks(stage), stage + 1) << "stage " << stage;
     }
+
+    EXPECT_EQ(store.next_stage_with_bricks(store.count() - 1), 0u);
 }
 
-TEST(StageMap, WrapsToFirstStageAfterTheLastDesignedOne)
+TEST(StageStore, MapsEveryCellIdToACharacterAndBack)
 {
-    EXPECT_EQ(next_stage_with_bricks(game::game_bricks::TOTAL_STAGES - 1), 0u);
+    for (unsigned int id = 0; id < game::game_bricks::COUNT; ++id)
+    {
+        const char c = CStageStore::char_from_cell(id);
+
+        EXPECT_EQ(CStageStore::cell_from_char(c), static_cast<int>(id)) << "id " << id;
+    }
+
+    EXPECT_EQ(CStageStore::cell_from_char('?'), -1);
+}
+
+TEST(StageStore, RefusesAMissingDirectory)
+{
+    CStageStore store;
+
+    EXPECT_FALSE(store.load(TEST_MEDIA_DIR "/no-such-dir"));
 }

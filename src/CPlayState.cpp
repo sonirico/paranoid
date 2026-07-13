@@ -1,9 +1,9 @@
 #include "CPlayState.hpp"
 
 #include "CGameContainer.hpp"
+#include "CStageStore.hpp"
 #include "engine/Gamepad.hpp"
 #include "engine/Text.hpp"
-#include "other_functions.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -44,14 +44,14 @@ void CPlayState::init()
     this->spawn_ball();
 
     this->enter_intro(true);
-
-    this->play_stage_music();
 }
 
 void CPlayState::play_stage_music()
 {
-    this->gc->play_music(current_stage % 2 == 0 ? "media/music/stage.ogg"
-                                                : "media/music/crystalhammer.ogg");
+    // Few tracks: cycle the backgrounds; the menu theme moonlights too.
+    const char* tracks[] = {"media/music/crystalhammer.ogg", "media/music/arkanoid.ogg"};
+
+    this->gc->play_music(tracks[current_stage % 2]);
 }
 
 void CPlayState::enter_intro(bool show_round)
@@ -59,6 +59,13 @@ void CPlayState::enter_intro(bool show_round)
     this->phase = Phase::Intro;
     this->phase_time = show_round ? ROUND_INTRO_DURATION : READY_DURATION;
     this->intro_shows_round = show_round;
+
+    // Stage starts open on the round jingle; the background track
+    // takes over once play begins. Respawns keep the music running.
+    if (show_round)
+    {
+        this->gc->play_music("media/music/stage.ogg");
+    }
 }
 
 void CPlayState::events()
@@ -143,6 +150,9 @@ int CPlayState::update(const float dt)
         if (this->phase_time <= 0)
         {
             this->phase = Phase::Playing;
+
+            // The jingle is over: bring in the background track.
+            this->play_stage_music();
         }
 
         return NULLSTATE;
@@ -929,7 +939,7 @@ void CPlayState::load_bricks()
 {
     this->bricks.clear();
 
-    const unsigned int* current_map = get_stage_map(current_stage);
+    const std::vector<unsigned int>* current_map = this->gc->stages->get(current_stage);
 
     if (current_map == nullptr)
     {
@@ -938,19 +948,17 @@ void CPlayState::load_bricks()
 
     this->total_bricks = 0;
 
+    // Stage cells are row-major: index i sits at grid (i % 15, i / 15).
     for (unsigned int i = 0; i < (BRICKS_PER_LINE * LINES); ++i)
     {
-        game::game_bricks::bricks type = static_cast<game::game_bricks::bricks>(current_map[i]);
+        game::game_bricks::bricks type = static_cast<game::game_bricks::bricks>((*current_map)[i]);
 
         if (type != NONE)
         {
             auto b = std::make_unique<CBrick>(this, type);
 
-            unsigned int row = i / LINES;
-            unsigned int column = i % BRICKS_PER_LINE;
-
-            unsigned int x = MARGIN_LEFT + BRICK_BOUND.x * 2 * row;
-            unsigned int y = MARGIN_TOP + BRICK_BOUND.y * 2 * column;
+            unsigned int x = MARGIN_LEFT + BRICK_BOUND.x * 2 * (i % BRICKS_PER_LINE);
+            unsigned int y = MARGIN_TOP + BRICK_BOUND.y * 2 * (i / BRICKS_PER_LINE);
 
             b->setPosition(x, y);
 
@@ -967,7 +975,7 @@ void CPlayState::load_bricks()
 
 void CPlayState::next_stage()
 {
-    current_stage = next_stage_with_bricks(current_stage);
+    current_stage = this->gc->stages->next_stage_with_bricks(current_stage);
 
     this->balls.clear();
     this->bonus.clear();
@@ -979,8 +987,6 @@ void CPlayState::next_stage()
     this->spawn_ball();
 
     this->enter_intro(true);
-
-    this->play_stage_music();
 }
 
 void CPlayState::insert_bonus(CBrick* brick)

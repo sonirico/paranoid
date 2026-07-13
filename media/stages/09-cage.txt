@@ -1,0 +1,15 @@
+...............
+X......X......X
+X.SSDS.X.SDSS.X
+X.SDSS.X.DSSD.X
+X.DSSD.X.SSDS.X
+..SSDS...SDSS..
+..SDSS...DSSD..
+X.DSSD.X.SSDS.X
+X.SSDS.X.SDSS.X
+X.SDSS.X.DSSD.X
+X.DSSD.X.SSDS.X
+X......X......X
+...............
+.S..S..S..S..S.
+...............

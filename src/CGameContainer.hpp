@@ -15,6 +15,8 @@ class Music;
 
 // Shared services every state needs: the window, the loaded resources
 // and the sound-effect voices. Owns none of its dependencies.
+class CStageStore;
+
 class CGameContainer
 {
   public:
@@ -57,6 +59,9 @@ class CGameContainer
 
     // The controller, when main wired one up (tests leave it null).
     engine::Gamepad* gamepad = nullptr;
+
+    // The stage walls loaded from media/stages.
+    CStageStore* stages = nullptr;
 
   private:
     // One dedicated voice per effect, indexed by its fx id.

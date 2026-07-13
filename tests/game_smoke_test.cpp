@@ -2,6 +2,7 @@
 #include "CGameContainer.hpp"
 #include "CGameStateManager.hpp"
 #include "CResourceHolder.hpp"
+#include "CStageStore.hpp"
 #include "engine/AudioDevice.hpp"
 #include "engine/Music.hpp"
 #include "engine/Window.hpp"
@@ -43,8 +44,12 @@ class GameSmokeTest : public ::testing::Test
 
         music = std::make_unique<engine::Music>(*audio);
 
+        stages = std::make_unique<CStageStore>();
+        ASSERT_TRUE(stages->load(TEST_MEDIA_DIR "/stages"));
+
         container =
             std::make_unique<CGameContainer>(window.get(), audio.get(), holder.get(), music.get());
+        container->stages = stages.get();
     }
 
     void TearDown() override
@@ -60,6 +65,7 @@ class GameSmokeTest : public ::testing::Test
     std::unique_ptr<engine::Window> window;
     std::unique_ptr<engine::AudioDevice> audio;
     std::unique_ptr<engine::Music> music;
+    std::unique_ptr<CStageStore> stages;
     std::unique_ptr<CResourceHolder> holder;
     std::unique_ptr<CGameContainer> container;
 };

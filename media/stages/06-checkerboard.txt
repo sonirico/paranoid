@@ -1,0 +1,15 @@
+...............
+.P.P.P.P.P.P.P.
+P.P.P.P.P.P.P.P
+.W.W.W.W.W.W.W.
+W.W.W.W.W.W.W.W
+.B.B.B.B.B.B.B.
+B.B.B.B.B.B.B.B
+.A.A.A.A.A.A.A.
+A.A.A.A.A.A.A.A
+.G.G.G.G.G.G.G.
+G.G.G.G.G.G.G.G
+.Y.Y.Y.Y.Y.Y.Y.
+...............
+...S...S...S...
+...............

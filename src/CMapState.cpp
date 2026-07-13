@@ -2,13 +2,13 @@
 
 #include "CGameContainer.hpp"
 #include "CResourceHolder.hpp"
+#include "CStageStore.hpp"
 #include "engine/Sprite.hpp"
 #include "engine/Text.hpp"
 
 #include <SDL3/SDL.h>
 
 #include <fstream>
-#include <iostream>
 
 using namespace game::game_states;
 using namespace game::game_bricks;
@@ -31,8 +31,6 @@ struct SSelector : public CEntity
     const float t_moved_value = .2f;
 
     bool selected = false;
-
-    bool printed = false;
 
     int brick_type_map[LINES][BRICKS_PER_LINE];
     int current_brick_type = 0; // NONE
@@ -149,21 +147,6 @@ struct SSelector : public CEntity
         this->brick_type_map[i][j] = this->current_brick_type;
     }
 
-    // Dumps the edited map to stdout in brick_map[] literal format.
-    void print_map()
-    {
-        if (this->printed)
-        {
-            return;
-        }
-
-        for (unsigned int i = 0; i < LINES; i++)
-            for (unsigned int j = 0; j < BRICKS_PER_LINE; j++)
-                std::cout << this->brick_type_map[i][j] << ",";
-
-        this->printed = true;
-    }
-
     void move_selector(int dx, int dy)
     {
         if (this->moved)
@@ -226,8 +209,6 @@ void CMapState::init()
 {
     this->selector = std::make_unique<SSelector>(this);
 
-    this->paddle = std::make_unique<CPaddle>(this);
-
     // A sample column with every brick type, for reference while editing.
     for (int i = 1; i <= 11; ++i)
     {
@@ -265,11 +246,6 @@ void CMapState::events()
     }
     this->load_was_down = load;
 
-    if (keys[SDL_SCANCODE_SPACE])
-    {
-        this->selector->print_map();
-    }
-
     if (keys[SDL_SCANCODE_LEFT])
     {
         this->selector->move_selector(-1, 0);
@@ -303,8 +279,6 @@ int CMapState::update(const float dt)
         return MENU;
     }
 
-    this->update_paddle(dt);
-    this->update_balls(dt);
     this->update_bricks(dt);
 
     this->selector->update(dt);
@@ -332,12 +306,17 @@ void CMapState::save_map()
         return;
     }
 
-    for (unsigned int i = 0; i < LINES; i++)
+    // Same row-major ASCII format as the media/stages files, so a
+    // finished map can ship as a built-in stage by copying the file.
+    for (unsigned int y = 0; y < LINES; y++)
     {
-        for (unsigned int j = 0; j < BRICKS_PER_LINE; j++)
+        for (unsigned int x = 0; x < BRICKS_PER_LINE; x++)
         {
-            file << this->selector->brick_type_map[i][j] << ' ';
+            file << CStageStore::char_from_cell(
+                static_cast<unsigned int>(this->selector->brick_type_map[x][y]));
         }
+
+        file << '\n';
     }
 
     this->show_status("SAVED");
@@ -359,20 +338,27 @@ void CMapState::load_map()
     }
 
     int loaded[LINES][BRICKS_PER_LINE];
+    std::string line;
 
-    for (unsigned int i = 0; i < LINES; i++)
+    for (unsigned int y = 0; y < LINES; y++)
     {
-        for (unsigned int j = 0; j < BRICKS_PER_LINE; j++)
+        if (!std::getline(file, line) || line.size() != BRICKS_PER_LINE)
         {
-            int type = 0;
+            this->show_status("LOAD FAILED");
+            return;
+        }
 
-            if (!(file >> type) || type < 0 || type >= static_cast<int>(COUNT))
+        for (unsigned int x = 0; x < BRICKS_PER_LINE; x++)
+        {
+            const int type = CStageStore::cell_from_char(line[x]);
+
+            if (type < 0)
             {
                 this->show_status("LOAD FAILED");
                 return;
             }
 
-            loaded[i][j] = type;
+            loaded[x][y] = type;
         }
     }
 
@@ -395,14 +381,11 @@ void CMapState::show_status(const std::string& text)
 
 void CMapState::clear()
 {
-    this->balls.clear();
     this->bricks.clear();
 }
 
 void CMapState::render()
 {
-    this->render_balls();
-    this->render_paddle();
     this->render_bricks();
 
     this->gc->window->draw(*this->selector);
@@ -427,32 +410,11 @@ void CMapState::render_status()
     this->gc->window->draw(text);
 }
 
-void CMapState::update_balls(const float dt)
-{
-    for (auto& ball : this->balls)
-    {
-        ball->update(dt);
-    }
-}
-
 void CMapState::update_bricks(const float dt)
 {
     for (auto& brick : this->bricks)
     {
         brick->update(dt);
-    }
-}
-
-void CMapState::update_paddle(const float dt)
-{
-    this->paddle->update(dt);
-}
-
-void CMapState::render_balls()
-{
-    for (auto& ball : this->balls)
-    {
-        this->gc->window->draw(*ball);
     }
 }
 
@@ -462,9 +424,4 @@ void CMapState::render_bricks()
     {
         this->gc->window->draw(*brick);
     }
-}
-
-void CMapState::render_paddle()
-{
-    this->gc->window->draw(*(this->paddle));
 }
