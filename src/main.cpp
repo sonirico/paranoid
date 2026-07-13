@@ -75,6 +75,12 @@ int main(int argc, char** argv)
 
         CGameContainer gc(&window, &audio, &rh);
 
+        if (char* pref_path = SDL_GetPrefPath("", "paranoid"))
+        {
+            gc.data_dir = pref_path;
+            SDL_free(pref_path);
+        }
+
         // Smoke runs skip the menu so the frames exercise real gameplay.
         CGameStateManager gsm(&gc, smoke ? game::game_states::PLAY : game::game_states::MENU);
 

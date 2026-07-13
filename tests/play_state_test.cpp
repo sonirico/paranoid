@@ -339,6 +339,69 @@ TEST_F(PlayStateTest, FastBallNeverTunnelsThroughABrick)
     EXPECT_TRUE(play_state->get_bricks().empty());
 }
 
+TEST_F(PlayStateTest, DestroyingABrickScoresTenPerLife)
+{
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_TRUE(play_state->get_bricks().empty());
+    EXPECT_EQ(play_state->get_score(), 10u);
+    EXPECT_EQ(play_state->get_high_score(), 10u);
+}
+
+TEST_F(PlayStateTest, ChippedBricksOnlyScoreWhenKilled)
+{
+    // Silver takes two hits; chipping the first life scores nothing.
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::SILVER);
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_EQ(play_state->get_bricks().size(), 1u);
+    EXPECT_EQ(play_state->get_score(), 0u);
+
+    // The killing blow awards its full 2-life value.
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_TRUE(play_state->get_bricks().empty());
+    EXPECT_EQ(play_state->get_score(), 20u);
+}
+
+TEST_F(PlayStateTest, GameOverResetsScoreButKeepsHighScore)
+{
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_EQ(play_state->get_score(), 10u);
+
+    // Burn the three lives: the run restarts but the best mark stays.
+    for (int i = 0; i < 3; ++i)
+    {
+        loseAllBalls();
+    }
+
+    EXPECT_EQ(play_state->get_score(), 0u);
+    EXPECT_EQ(play_state->get_high_score(), 10u);
+}
+
 TEST_F(PlayStateTest, BrickHitConsumesExactlyOneLife)
 {
     // Silver bricks take two hits: one bounce must leave it standing.

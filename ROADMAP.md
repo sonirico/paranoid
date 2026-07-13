@@ -25,7 +25,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Render de texto: bitmap font 8x8 (`engine::BitmapFont` + `engine::Text`, `media/textures/font.png`)
 - [x] Estado de menú (Play / Options / Quit, Options aún "coming soon"); Escape abre menú de pausa (Resume / Main menu / Quit) sin perder la partida
 - [x] Fullscreen (F11 o desde Options) con letterbox/stretch configurable en Options
-- [ ] Score + HUD (puntos por ladrillo/bonus) y high score persistido
+- [x] Score + HUD: 10 puntos por vida del ladrillo (solo al matarlo); high score persistido en `~/.local/share/paranoid/highscore`
 - [ ] Transiciones: "Round N — Ready", pantalla de game over, stage clear
 
 ## Nivel 3 — Contenido y pulido

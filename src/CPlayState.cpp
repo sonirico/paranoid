@@ -6,8 +6,11 @@
 
 #include <SDL3/SDL.h>
 
+#include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstdlib>
+#include <fstream>
 #include <string>
 
 using namespace game::game_states;
@@ -25,6 +28,9 @@ void CPlayState::init()
 {
     current_stage = 0;
     this->lives = STARTING_LIVES;
+    this->score = 0;
+
+    this->load_high_score();
 
     this->paddle = std::make_unique<CPaddle>(this);
 
@@ -128,6 +134,7 @@ void CPlayState::render()
     this->render_lasers();
     this->render_lives();
     this->render_active_bonus();
+    this->render_score();
 
     if (this->paused)
     {
@@ -161,6 +168,64 @@ void CPlayState::render_lives()
     {
         icon.setPosition(10.f + i * 38.f, game::HEIGHT - 18.f);
         this->gc->window->draw(icon);
+    }
+}
+
+void CPlayState::render_score()
+{
+    char buffer[32];
+
+    std::snprintf(buffer, sizeof(buffer), "SCORE %06u", this->score);
+
+    engine::Text score_text;
+    score_text.setFont(this->gc->font);
+    score_text.setString(buffer);
+    score_text.setScale({2.f, 2.f});
+    score_text.setPosition(10.f, 10.f);
+
+    this->gc->window->draw(score_text);
+
+    std::snprintf(buffer, sizeof(buffer), "HIGH %06u", this->high_score);
+
+    engine::Text high_text;
+    high_text.setFont(this->gc->font);
+    high_text.setString(buffer);
+    high_text.setScale({2.f, 2.f});
+    high_text.setColor(engine::Color::Yellow);
+    high_text.setPosition(game::WIDTH - 10.f - high_text.getGlobalBounds().width, 10.f);
+
+    this->gc->window->draw(high_text);
+}
+
+void CPlayState::load_high_score()
+{
+    this->high_score = 0;
+
+    if (this->gc->data_dir.empty())
+    {
+        return;
+    }
+
+    std::ifstream file(this->gc->data_dir + "highscore");
+
+    if (file)
+    {
+        file >> this->high_score;
+    }
+}
+
+void CPlayState::save_high_score()
+{
+    if (this->gc->data_dir.empty())
+    {
+        return;
+    }
+
+    std::ofstream file(this->gc->data_dir + "highscore");
+
+    if (file)
+    {
+        file << this->high_score;
     }
 }
 
@@ -221,6 +286,8 @@ void CPlayState::render_active_bonus()
 
 void CPlayState::clear()
 {
+    this->save_high_score();
+
     this->balls.clear();
     this->bonus.clear();
     this->bricks.clear();
@@ -279,6 +346,9 @@ void CPlayState::lose_life()
         // Game over: restart the whole run.
         current_stage = 0;
         this->lives = STARTING_LIVES;
+
+        this->save_high_score();
+        this->score = 0;
 
         this->bonus.clear();
         this->load_bricks();
@@ -526,6 +596,9 @@ bool CPlayState::update_bricks(const float dt)
 
         if (brick->is_removable())
         {
+            this->score += brick->get_score();
+            this->high_score = std::max(this->high_score, this->score);
+
             this->insert_bonus(brick);
             it = this->bricks.erase(it);
 
@@ -702,6 +775,16 @@ void CPlayState::insert_bonus(CBrick* brick)
 unsigned int CPlayState::get_current_stage()
 {
     return current_stage;
+}
+
+unsigned int CPlayState::get_score() const
+{
+    return this->score;
+}
+
+unsigned int CPlayState::get_high_score() const
+{
+    return this->high_score;
 }
 
 unsigned int CPlayState::get_lives() const

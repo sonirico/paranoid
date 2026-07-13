@@ -40,67 +40,56 @@ void CBrick::settings()
     switch (this->type)
     {
     case RED:
-        this->score = 90;
         this->lifes = 1;
         this->rects.push_back({64, 0, static_cast<int>(w), static_cast<int>(h)});
         break;
     case AQUA:
-        this->score = 70;
         this->lifes = 1;
         this->rects.push_back(
             {static_cast<int>(64 + w * 2), 0, static_cast<int>(w), static_cast<int>(h)});
         break;
     case BLUE:
-        this->score = 100;
         this->lifes = 1;
         this->rects.push_back({static_cast<int>(64 + w * 2), static_cast<int>(h),
                                static_cast<int>(w), static_cast<int>(h)});
         break;
     case GREEN:
-        this->score = 80;
         this->lifes = 1;
         this->rects.push_back({static_cast<int>(64 + w), static_cast<int>(h), static_cast<int>(w),
                                static_cast<int>(h)});
         break;
     case ORANGE:
-        this->score = 60;
         this->lifes = 1;
         this->rects.push_back({64, static_cast<int>(h), static_cast<int>(w), static_cast<int>(h)});
         break;
     case PURPPLE:
-        this->score = 110;
         this->lifes = 1;
         this->rects.push_back(
             {static_cast<int>(64 + w * 3), 0, static_cast<int>(w), static_cast<int>(h)});
         break;
     case WHITE:
-        this->score = 50;
         this->lifes = 1;
         this->rects.push_back({static_cast<int>(64 + w * 3), static_cast<int>(h),
                                static_cast<int>(w), static_cast<int>(h)});
         break;
     case YELLOW:
-        this->score = 120;
         this->lifes = 1;
         this->rects.push_back(
             {static_cast<int>(64 + w), 0, static_cast<int>(w), static_cast<int>(h)});
         break;
     case SILVER:
-        this->score = 50 * CPlayState::get_current_stage();
         this->lifes = 2;
         for (unsigned int i = 0; i < 6; i++)
             this->rects.push_back({static_cast<int>(64 + w * 4), static_cast<int>(h * i),
                                    static_cast<int>(w), static_cast<int>(h)});
         break;
     case GOLD:
-        this->score = 100 * CPlayState::get_current_stage();
         this->lifes = 3;
         for (unsigned int i = 0; i < 6; i++)
             this->rects.push_back({static_cast<int>(64 + w * 5), static_cast<int>(h * i),
                                    static_cast<int>(w), static_cast<int>(h)});
         break;
     case UNDESTROYABLE:
-        this->score = 0;
         for (unsigned int i = 0; i < 6; i++)
             this->rects.push_back({static_cast<int>(64 + w * 6), static_cast<int>(h * i),
                                    static_cast<int>(w), static_cast<int>(h)});
@@ -108,6 +97,10 @@ void CBrick::settings()
     default:
         break;
     }
+
+    // A brick is worth 10 points per life it takes to kill; the points
+    // are only awarded when it actually dies.
+    this->score = 10 * this->lifes;
 
     this->animation.setSpriteSheet(this->state->rh->get(game::game_textures::MAIN));
 
@@ -133,4 +126,9 @@ void CBrick::quit_life()
 bool CBrick::is_removable() const
 {
     return this->removable;
+}
+
+unsigned int CBrick::get_score() const
+{
+    return this->score;
 }

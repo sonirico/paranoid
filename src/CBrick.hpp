@@ -19,6 +19,8 @@ class CBrick : public CEntity
 
     bool is_removable() const;
 
+    unsigned int get_score() const;
+
   public:
     game::game_bricks::bricks type;
 

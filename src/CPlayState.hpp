@@ -48,6 +48,8 @@ class CPlayState : public CState
     static unsigned int get_current_stage();
 
     unsigned int get_lives() const;
+    unsigned int get_score() const;
+    unsigned int get_high_score() const;
     std::list<std::unique_ptr<CBall>>& get_balls();
     std::list<std::unique_ptr<CBrick>>& get_bricks();
     std::list<std::unique_ptr<CLaser>>& get_lasers();
@@ -79,6 +81,11 @@ class CPlayState : public CState
     void render_lives();
     void render_active_bonus();
     void render_pause_menu();
+    void render_score();
+
+    // The high score lives in gc->data_dir; no-ops when unset (tests).
+    void load_high_score();
+    void save_high_score();
 
     void update_lasers(const float dt);
     void render_lasers();
@@ -102,6 +109,9 @@ class CPlayState : public CState
 
     static const unsigned int STARTING_LIVES = 3;
     unsigned int lives = STARTING_LIVES;
+
+    unsigned int score = 0;
+    unsigned int high_score = 0;
 
     game::game_bonus::bonus active_bonus = game::game_bonus::COUNT;
     float bonus_time_left = 0;
