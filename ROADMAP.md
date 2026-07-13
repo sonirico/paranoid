@@ -30,7 +30,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 
 ## Nivel 3 — Contenido y pulido
 
-- [ ] Diseñar stages 5–10 (hoy vacíos en `assets.h`)
+- [x] Diseñar stages 5–10: Invader, Checkerboard, Fortress, Chevrons, Cage, END
 - [ ] Efectos de las cápsulas B/M/N (B = break/saltar nivel, etc.)
 - [ ] Juice: partículas al romper ladrillo, flash/shake
 - [ ] Animación de muerte de la pala (frames de explosión en `base.png` y=224–232)

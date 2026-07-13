@@ -35,21 +35,24 @@ TEST(StageMap, ReturnsNullForOutOfRangeStage)
 
 TEST(StageMap, ReportsWhetherAStageHasBricks)
 {
-    EXPECT_TRUE(stage_has_bricks(0));
-    // Stages beyond the four designed ones are empty placeholders.
-    EXPECT_FALSE(stage_has_bricks(4));
+    // All ten stages are designed now; only out-of-range is empty.
+    for (unsigned int stage = 0; stage < game::game_bricks::TOTAL_STAGES; ++stage)
+    {
+        EXPECT_TRUE(stage_has_bricks(stage)) << "stage " << stage;
+    }
+
     EXPECT_FALSE(stage_has_bricks(game::game_bricks::TOTAL_STAGES));
 }
 
 TEST(StageMap, AdvancesToNextStageWithBricks)
 {
-    EXPECT_EQ(next_stage_with_bricks(0), 1u);
-    EXPECT_EQ(next_stage_with_bricks(1), 2u);
-    EXPECT_EQ(next_stage_with_bricks(2), 3u);
+    for (unsigned int stage = 0; stage + 1 < game::game_bricks::TOTAL_STAGES; ++stage)
+    {
+        EXPECT_EQ(next_stage_with_bricks(stage), stage + 1) << "stage " << stage;
+    }
 }
 
 TEST(StageMap, WrapsToFirstStageAfterTheLastDesignedOne)
 {
-    EXPECT_EQ(next_stage_with_bricks(3), 0u);
     EXPECT_EQ(next_stage_with_bricks(game::game_bricks::TOTAL_STAGES - 1), 0u);
 }
