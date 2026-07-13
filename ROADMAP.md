@@ -16,7 +16,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Timeout de bonus (10 s, `BONUS_DURATION`) con countdown en el HUD; cualquier cápsula cancela el modo anterior
 - [x] Sticky atrapa la bola donde impactó (offset sobre la pala) en vez de recentrarla
 - [x] Input de ratón para la pala (absoluto, click = Espacio) + teclado a 550 px/s
-- [ ] Sonido al perder la bola (`media/fx/muerte.wav`, ya existe sin usar)
+- [x] Sonido al perder la bola (`media/fx/muerte.wav`)
 - [ ] Sonido al coger cápsulas (`option.wav`, `points.wav`, `lifeup.wav`, `sticky.wav`, sin usar)
 - [ ] Pausa real: Escape no debe cerrar el juego en seco
 

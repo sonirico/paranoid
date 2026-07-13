@@ -211,6 +211,8 @@ void CPlayState::lose_life()
 {
     this->lives--;
 
+    this->gc->play_fx(game::game_fx::MUERTE);
+
     if (this->lives == 0)
     {
         // Game over: restart the whole run.

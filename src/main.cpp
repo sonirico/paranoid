@@ -27,6 +27,11 @@ void load_resources(CResourceHolder& rh)
 
     rh.load(REBOTE1, "media/fx/rebote1.wav");
     rh.load(REBOTE2, "media/fx/rebote2.wav");
+    rh.load(MUERTE, "media/fx/muerte.wav");
+    rh.load(OPTION, "media/fx/option.wav");
+    rh.load(POINTS, "media/fx/points.wav");
+    rh.load(LIFEUP, "media/fx/lifeup.wav");
+    rh.load(STICKY, "media/fx/sticky.wav");
 }
 } // namespace
 

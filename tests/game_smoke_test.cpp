@@ -32,6 +32,11 @@ class GameSmokeTest : public ::testing::Test
         holder->load(game::game_textures::BRICKS, TEST_MEDIA_DIR "/textures/bricks.png");
         holder->load(game::game_fx::REBOTE1, TEST_MEDIA_DIR "/fx/rebote1.wav");
         holder->load(game::game_fx::REBOTE2, TEST_MEDIA_DIR "/fx/rebote2.wav");
+        holder->load(game::game_fx::MUERTE, TEST_MEDIA_DIR "/fx/muerte.wav");
+        holder->load(game::game_fx::OPTION, TEST_MEDIA_DIR "/fx/option.wav");
+        holder->load(game::game_fx::POINTS, TEST_MEDIA_DIR "/fx/points.wav");
+        holder->load(game::game_fx::LIFEUP, TEST_MEDIA_DIR "/fx/lifeup.wav");
+        holder->load(game::game_fx::STICKY, TEST_MEDIA_DIR "/fx/sticky.wav");
 
         container = std::make_unique<CGameContainer>(window.get(), audio.get(), holder.get());
     }

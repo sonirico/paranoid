@@ -30,5 +30,6 @@ class CGameContainer
     CResourceHolder* rh;
 
   private:
-    engine::Sound current_sound[2];
+    // One dedicated voice per effect, indexed by its fx id.
+    engine::Sound current_sound[game::game_fx::COUNT];
 };

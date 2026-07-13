@@ -6,10 +6,15 @@
 
 CGameContainer::CGameContainer(engine::Window* window, engine::AudioDevice* audio,
                                CResourceHolder* rh)
-    : window(window), rh(rh), current_sound{engine::Sound(*audio), engine::Sound(*audio)}
+    : window(window), rh(rh),
+      current_sound{engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
+                    engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
+                    engine::Sound(*audio)}
 {
-    this->current_sound[0].setBuffer(this->rh->get(game::game_fx::REBOTE1));
-    this->current_sound[1].setBuffer(this->rh->get(game::game_fx::REBOTE2));
+    for (int i = 0; i < game::game_fx::COUNT; ++i)
+    {
+        this->current_sound[i].setBuffer(this->rh->get(static_cast<game::game_fx::fx>(i)));
+    }
 }
 
 void CGameContainer::events()

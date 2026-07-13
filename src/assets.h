@@ -138,7 +138,13 @@ namespace game_fx
 enum fx
 {
     REBOTE1 = 0,
-    REBOTE2
+    REBOTE2,
+    MUERTE,
+    OPTION,
+    POINTS,
+    LIFEUP,
+    STICKY,
+    COUNT
 };
 };
 
