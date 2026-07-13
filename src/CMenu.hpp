@@ -19,6 +19,10 @@ class CMenu
     // or -1 while nothing is chosen.
     int update();
 
+    // -1/+1 when Left/Right was just pressed during the last update(),
+    // 0 otherwise; lets value entries adjust without activating.
+    int get_horizontal() const;
+
     void render();
 
     int get_selected() const;
@@ -49,8 +53,12 @@ class CMenu
 
     bool up_was_down = false;
     bool down_was_down = false;
+    bool left_was_down = false;
+    bool right_was_down = false;
     bool enter_was_down = false;
     bool click_was_down = false;
+
+    int horizontal = 0;
 
     // Hover only retargets the selection while the mouse moves, so it
     // cannot fight the keyboard.

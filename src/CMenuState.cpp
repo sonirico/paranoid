@@ -62,7 +62,37 @@ int CMenuState::update(const float dt)
     // Each activation steps the volume by 10, wrapping past 100 to 0.
     const auto next_volume = [](float volume) { return volume >= 100.f ? 0.f : volume + 10.f; };
 
-    switch (this->options_menu->update())
+    const int activated = this->options_menu->update();
+
+    // Left/Right adjusts the selected entry in place: toggles flip and
+    // volumes step by 10 without wrapping.
+    const int step = this->options_menu->get_horizontal();
+
+    if (step != 0)
+    {
+        switch (this->options_menu->get_selected())
+        {
+        case 0:
+            this->gc->window->setScaleMode(this->gc->window->getScaleMode() ==
+                                                   engine::Window::ScaleMode::Letterbox
+                                               ? engine::Window::ScaleMode::Stretch
+                                               : engine::Window::ScaleMode::Letterbox);
+            break;
+        case 1:
+            this->gc->window->setFullscreen(!this->gc->window->isFullscreen());
+            break;
+        case 2:
+            this->gc->set_music_volume(this->gc->get_music_volume() + 10.f * step);
+            break;
+        case 3:
+            this->gc->set_fx_volume(this->gc->get_fx_volume() + 10.f * step);
+            break;
+        }
+
+        this->gc->play_fx(game::game_fx::SELECT);
+    }
+
+    switch (activated)
     {
     case 0:
         this->gc->window->setScaleMode(this->gc->window->getScaleMode() ==

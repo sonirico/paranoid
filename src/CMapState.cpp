@@ -409,14 +409,24 @@ void CMapState::render_palette_cursor()
 
 void CMapState::render_help()
 {
-    engine::Text help;
-    help.setFont(this->gc->font);
-    help.setString("ARROWS MOVE  ENTER PAINT  DEL ERASE  Q/E TYPE  S/L SAVE/LOAD  ESC MENU");
-    help.setScale({1.5f, 1.5f});
+    // Two lines so nothing runs off the 800px screen.
+    const char* lines[] = {"MOVE: ARROWS | PAINT: ENTER | ERASE: DEL | TYPE: Q/E",
+                           "SAVE: S | LOAD: L | MENU: ESC"};
 
-    help.setPosition((game::WIDTH - help.getGlobalBounds().width) / 2, game::HEIGHT - 30.f);
+    float y = game::HEIGHT - 46.f;
 
-    this->gc->window->draw(help);
+    for (const char* line : lines)
+    {
+        engine::Text help;
+        help.setFont(this->gc->font);
+        help.setString(line);
+        help.setScale({1.5f, 1.5f});
+        help.setPosition((game::WIDTH - help.getGlobalBounds().width) / 2, y);
+
+        this->gc->window->draw(help);
+
+        y += 20.f;
+    }
 }
 
 void CMapState::render_status()

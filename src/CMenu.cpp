@@ -37,6 +37,25 @@ int CMenu::update()
     this->up_was_down = up;
     this->down_was_down = down;
 
+    const bool left =
+        keys[SDL_SCANCODE_LEFT] || (pad_ok && pad->isButtonDown(engine::Gamepad::Button::DpadLeft));
+    const bool right = keys[SDL_SCANCODE_RIGHT] ||
+                       (pad_ok && pad->isButtonDown(engine::Gamepad::Button::DpadRight));
+
+    this->horizontal = 0;
+
+    if (left && !this->left_was_down)
+    {
+        this->horizontal = -1;
+    }
+    if (right && !this->right_was_down)
+    {
+        this->horizontal = 1;
+    }
+
+    this->left_was_down = left;
+    this->right_was_down = right;
+
     // In game coordinates, so fullscreen and letterbox don't skew it.
     const engine::Vec2f mouse = this->gc->window->getMousePosition();
     const bool click = SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK;
@@ -119,6 +138,11 @@ void CMenu::render()
 int CMenu::get_selected() const
 {
     return this->selected;
+}
+
+int CMenu::get_horizontal() const
+{
+    return this->horizontal;
 }
 
 void CMenu::set_entry(unsigned int i, std::string entry)
