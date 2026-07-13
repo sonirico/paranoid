@@ -29,7 +29,7 @@ void CMenuState::init()
 
 void CMenuState::events() {}
 
-int CMenuState::update(const float dt)
+int CMenuState::update(const float)
 {
     const bool* keys = SDL_GetKeyboardState(nullptr);
     const bool esc = keys[SDL_SCANCODE_ESCAPE];
