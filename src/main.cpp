@@ -125,7 +125,7 @@ int main(int argc, char** argv)
 
             if (gc.is_paused())
             {
-                const std::string label = "PAUSA";
+                const std::string label = "PAUSED";
                 const float scale = 4.f;
                 const float text_width = label.size() * 8.f * scale;
 
