@@ -5,6 +5,9 @@
 
 #include <SDL3/SDL.h>
 
+#include <algorithm>
+#include <fstream>
+
 CGameContainer::CGameContainer(engine::Window* window, engine::AudioDevice* audio,
                                CResourceHolder* rh, engine::Music* music)
     : window(window), rh(rh), music(music),
@@ -50,7 +53,7 @@ void CGameContainer::play_music(const std::string& path)
     {
         this->current_music = path;
 
-        this->music->setVolume(30);
+        this->music->setVolume(this->music_volume);
         this->music->play();
     }
     else
@@ -74,6 +77,69 @@ void CGameContainer::play_fx(game::game_fx::fx id)
 {
     int i = static_cast<int>(id);
 
-    this->current_sound[i].setVolume(10);
+    this->current_sound[i].setVolume(this->fx_volume);
     this->current_sound[i].play();
+}
+
+float CGameContainer::get_music_volume() const
+{
+    return this->music_volume;
+}
+
+void CGameContainer::set_music_volume(float volume)
+{
+    this->music_volume = std::clamp(volume, 0.f, 100.f);
+
+    if (this->music != nullptr)
+    {
+        this->music->setVolume(this->music_volume);
+    }
+
+    this->save_settings();
+}
+
+float CGameContainer::get_fx_volume() const
+{
+    return this->fx_volume;
+}
+
+void CGameContainer::set_fx_volume(float volume)
+{
+    this->fx_volume = std::clamp(volume, 0.f, 100.f);
+
+    this->save_settings();
+}
+
+void CGameContainer::load_settings()
+{
+    if (this->data_dir.empty())
+    {
+        return;
+    }
+
+    std::ifstream file(this->data_dir + "settings");
+
+    float music_vol = this->music_volume;
+    float fx_vol = this->fx_volume;
+
+    if (file >> music_vol >> fx_vol)
+    {
+        this->music_volume = std::clamp(music_vol, 0.f, 100.f);
+        this->fx_volume = std::clamp(fx_vol, 0.f, 100.f);
+    }
+}
+
+void CGameContainer::save_settings()
+{
+    if (this->data_dir.empty())
+    {
+        return;
+    }
+
+    std::ofstream file(this->data_dir + "settings");
+
+    if (file)
+    {
+        file << this->music_volume << ' ' << this->fx_volume;
+    }
 }

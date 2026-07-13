@@ -83,6 +83,8 @@ int main(int argc, char** argv)
             SDL_free(pref_path);
         }
 
+        gc.load_settings();
+
         // Smoke runs skip the menu so the frames exercise real gameplay.
         CGameStateManager gsm(&gc, smoke ? game::game_states::PLAY : game::game_states::MENU);
 

@@ -127,3 +127,25 @@ TEST_F(GameSmokeTest, GoldBrickSurvivesTwoHits)
 
     EXPECT_TRUE(brick.is_removable());
 }
+
+TEST_F(GameSmokeTest, VolumeSettingsClampAndPersist)
+{
+    container->data_dir = ::testing::TempDir();
+
+    container->set_music_volume(150.f);
+    container->set_fx_volume(-10.f);
+
+    EXPECT_FLOAT_EQ(container->get_music_volume(), 100.f);
+    EXPECT_FLOAT_EQ(container->get_fx_volume(), 0.f);
+
+    container->set_music_volume(40.f);
+    container->set_fx_volume(20.f);
+
+    // A fresh container pointed at the same data_dir reads them back.
+    CGameContainer other(window.get(), audio.get(), holder.get(), music.get());
+    other.data_dir = container->data_dir;
+    other.load_settings();
+
+    EXPECT_FLOAT_EQ(other.get_music_volume(), 40.f);
+    EXPECT_FLOAT_EQ(other.get_fx_volume(), 20.f);
+}

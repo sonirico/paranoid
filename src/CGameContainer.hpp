@@ -33,6 +33,16 @@ class CGameContainer
     void play_music(const std::string& path);
     void stop_music();
 
+    // Volumes in the 0..100 range; setters clamp, apply and persist.
+    float get_music_volume() const;
+    void set_music_volume(float volume);
+    float get_fx_volume() const;
+    void set_fx_volume(float volume);
+
+    // Volumes live in <data_dir>/settings; no-ops while data_dir is unset.
+    void load_settings();
+    void save_settings();
+
   public:
     engine::Window* window;
     CResourceHolder* rh;
@@ -50,4 +60,7 @@ class CGameContainer
 
     engine::Music* music;
     std::string current_music;
+
+    float music_volume = 30;
+    float fx_volume = 10;
 };

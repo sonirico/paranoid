@@ -20,8 +20,8 @@ void CMenuState::init()
     this->menu = std::make_unique<CMenu>(
         this->gc, std::vector<std::string>{"PLAY", "OPTIONS", "QUIT"}, game::WIDTH / 2.f, 300.f);
 
-    this->options_menu = std::make_unique<CMenu>(this->gc, std::vector<std::string>{"", "", "BACK"},
-                                                 game::WIDTH / 2.f, 300.f);
+    this->options_menu = std::make_unique<CMenu>(
+        this->gc, std::vector<std::string>{"", "", "", "", "BACK"}, game::WIDTH / 2.f, 280.f);
 
     this->refresh_options();
 }
@@ -56,6 +56,9 @@ int CMenuState::update(const float dt)
         return NULLSTATE;
     }
 
+    // Each activation steps the volume by 10, wrapping past 100 to 0.
+    const auto next_volume = [](float volume) { return volume >= 100.f ? 0.f : volume + 10.f; };
+
     switch (this->options_menu->update())
     {
     case 0:
@@ -68,6 +71,12 @@ int CMenuState::update(const float dt)
         this->gc->window->setFullscreen(!this->gc->window->isFullscreen());
         break;
     case 2:
+        this->gc->set_music_volume(next_volume(this->gc->get_music_volume()));
+        break;
+    case 3:
+        this->gc->set_fx_volume(next_volume(this->gc->get_fx_volume()));
+        break;
+    case 4:
         this->in_options = false;
         break;
     }
@@ -108,6 +117,10 @@ void CMenuState::refresh_options()
                                   std::string("SCALE: ") + (letterbox ? "LETTERBOX" : "STRETCH"));
     this->options_menu->set_entry(1, std::string("FULLSCREEN: ") +
                                          (this->gc->window->isFullscreen() ? "ON" : "OFF"));
+    this->options_menu->set_entry(
+        2, "MUSIC VOL: " + std::to_string(static_cast<int>(this->gc->get_music_volume())));
+    this->options_menu->set_entry(
+        3, "FX VOL: " + std::to_string(static_cast<int>(this->gc->get_fx_volume())));
 }
 
 void CMenuState::clear() {}
