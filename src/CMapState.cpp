@@ -18,22 +18,17 @@ struct SSelector : public CEntity
 {
     const float dt_animation = 0.2f;
 
-    // Animation slots.
-    static const unsigned int USUAL = 0;
-    static const unsigned int SELECTED = 1;
-
-    engine::Animation v_animation[2];
+    engine::Animation animation;
 
     engine::Vec2f ij; // Grid coordinates: map[i][j].
 
+    // Held arrows repeat at this cadence.
     bool moved = false;
     float t_moved = 0;
-    const float t_moved_value = .2f;
-
-    bool selected = false;
+    const float t_moved_value = .15f;
 
     int brick_type_map[LINES][BRICKS_PER_LINE];
-    int current_brick_type = 0; // NONE
+    int current_brick_type = RED;
 
     CMapState* map_state;
 
@@ -47,15 +42,11 @@ struct SSelector : public CEntity
 
         this->ij = engine::Vec2f{0, 0};
 
-        this->v_animation[USUAL].setSpriteSheet(st->rh->get(game::game_textures::MAIN));
-        this->v_animation[SELECTED].setSpriteSheet(st->rh->get(game::game_textures::MAIN));
+        this->animation.setSpriteSheet(st->rh->get(game::game_textures::MAIN));
+        this->animation.addFrame({128, 56, 16, 8});
+        this->animation.addFrame({128, 64, 16, 8});
 
-        this->v_animation[USUAL].addFrame({128, 48, 16, 8});
-
-        this->v_animation[SELECTED].addFrame({128, 56, 16, 8});
-        this->v_animation[SELECTED].addFrame({128, 64, 16, 8});
-
-        this->current_animation = &this->v_animation[USUAL];
+        this->current_animation = &this->animation;
 
         this->animated_sprite = engine::AnimatedSprite(dt_animation, true, false);
         this->animated_sprite.play(*this->current_animation);
@@ -130,34 +121,32 @@ struct SSelector : public CEntity
 
     void reset() override {}
 
-    void set_brick(int dy)
+    // Stamps the current brick type into the cell under the cursor.
+    void paint()
     {
-        int limit = static_cast<int>(COUNT) - 1; // NONE also counts.
+        this->brick_type_map[static_cast<int>(this->ij.x)][static_cast<int>(this->ij.y)] =
+            this->current_brick_type;
+    }
 
-        if (this->current_brick_type + dy < 0)
-            this->current_brick_type = limit;
-        else if (this->current_brick_type + dy > limit)
-            this->current_brick_type = 0;
-        else
-            this->current_brick_type += dy;
+    void erase()
+    {
+        this->brick_type_map[static_cast<int>(this->ij.x)][static_cast<int>(this->ij.y)] = NONE;
+    }
 
-        unsigned int i = static_cast<int>(this->ij.x);
-        unsigned int j = static_cast<int>(this->ij.y);
+    // Steps through the brick palette (NONE is what erase is for).
+    void cycle_type(int delta)
+    {
+        const int first = static_cast<int>(RED);
+        const int last = static_cast<int>(COUNT) - 1;
+        const int span = last - first + 1;
 
-        this->brick_type_map[i][j] = this->current_brick_type;
+        this->current_brick_type = first + (this->current_brick_type - first + delta + span) % span;
     }
 
     void move_selector(int dx, int dy)
     {
         if (this->moved)
         {
-            return;
-        }
-        if (this->selected)
-        {
-            this->set_brick(dy);
-            this->moved = true;
-            this->t_moved = 0;
             return;
         }
 
@@ -179,21 +168,6 @@ struct SSelector : public CEntity
                           MARGIN_TOP + (ij.y * BRICK_BOUND.y * 2));
         this->moved = true;
         this->t_moved = 0;
-    }
-
-    void change_animation()
-    {
-        if (this->selected)
-            this->current_animation = &this->v_animation[SELECTED];
-        else
-            this->current_animation = &this->v_animation[USUAL];
-    }
-
-    void set_selected(bool b)
-    {
-        this->selected = b;
-
-        this->change_animation();
     }
 };
 
@@ -262,13 +236,39 @@ void CMapState::events()
     {
         this->selector->move_selector(0, 1);
     }
-    if (keys[SDL_SCANCODE_RETURN])
+
+    const bool prev = keys[SDL_SCANCODE_Q];
+
+    if (prev && !this->prev_type_was_down)
     {
-        this->selector->set_selected(true);
+        this->selector->cycle_type(-1);
     }
-    if (keys[SDL_SCANCODE_BACKSPACE])
+    this->prev_type_was_down = prev;
+
+    const bool next = keys[SDL_SCANCODE_E];
+
+    if (next && !this->next_type_was_down)
     {
-        this->selector->set_selected(false);
+        this->selector->cycle_type(1);
+    }
+    this->next_type_was_down = next;
+
+    // Hold to paint while moving; arming on a release first keeps the
+    // Enter press that opened the editor from stamping a brick.
+    const bool paint = keys[SDL_SCANCODE_RETURN] || keys[SDL_SCANCODE_SPACE];
+
+    if (!paint)
+    {
+        this->paint_armed = true;
+    }
+    else if (this->paint_armed)
+    {
+        this->selector->paint();
+    }
+
+    if (keys[SDL_SCANCODE_BACKSPACE] || keys[SDL_SCANCODE_DELETE])
+    {
+        this->selector->erase();
     }
 }
 
@@ -390,7 +390,33 @@ void CMapState::render()
 
     this->gc->window->draw(*this->selector);
 
+    this->render_palette_cursor();
+    this->render_help();
     this->render_status();
+}
+
+void CMapState::render_palette_cursor()
+{
+    engine::Text cursor;
+    cursor.setFont(this->gc->font);
+    cursor.setString(">");
+    cursor.setScale({2.f, 2.f});
+    cursor.setColor(engine::Color::Yellow);
+    cursor.setPosition(75.f, 100.f + 20.f * this->selector->current_brick_type);
+
+    this->gc->window->draw(cursor);
+}
+
+void CMapState::render_help()
+{
+    engine::Text help;
+    help.setFont(this->gc->font);
+    help.setString("ARROWS MOVE  ENTER PAINT  DEL ERASE  Q/E TYPE  S/L SAVE/LOAD  ESC MENU");
+    help.setScale({1.5f, 1.5f});
+
+    help.setPosition((game::WIDTH - help.getGlobalBounds().width) / 2, game::HEIGHT - 30.f);
+
+    this->gc->window->draw(help);
 }
 
 void CMapState::render_status()

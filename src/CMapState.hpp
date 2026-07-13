@@ -29,6 +29,9 @@ class CMapState : public CState
     void update_bricks(const float dt);
 
     void render_bricks();
+    // The yellow arrow marking the current type in the palette column.
+    void render_palette_cursor();
+    void render_help();
     void render_status();
 
     // The edited map persists to <data_dir>/custom.map.
@@ -49,6 +52,12 @@ class CMapState : public CState
     bool esc_was_down = false;
     bool save_was_down = false;
     bool load_was_down = false;
+    bool prev_type_was_down = false;
+    bool next_type_was_down = false;
+
+    // Painting only starts after Enter/Space is seen released once, so
+    // the key press that opened the editor from the menu stamps nothing.
+    bool paint_armed = false;
 
     // Escape asks to leave; update() returns to the menu.
     bool back_requested = false;
