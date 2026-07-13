@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 
 project(paranoid
     VERSION 1.1.0
-    DESCRIPTION "Paranoid — an Arkanoid clone"
+    DESCRIPTION "Paranoid - an Arkanoid clone"
     LANGUAGES C CXX
 )
 
