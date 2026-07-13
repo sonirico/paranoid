@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  linux:
+    name: Linux ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    # Fedora ships SDL3; Ubuntu LTS does not yet.
+    container: fedora:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: >-
+          dnf install -y cmake ninja-build gcc-c++
+          SDL3-devel SDL3_image-devel gtest-devel
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Package
+        run: |
+          mkdir -p dist/paranoid
+          cp build/paranoid dist/paranoid/
+          cp -r media dist/paranoid/
+          tar -C dist -czf paranoid-linux-${{ matrix.arch }}.tar.gz paranoid
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paranoid-linux-${{ matrix.arch }}
+          path: paranoid-linux-${{ matrix.arch }}.tar.gz
+
+  windows:
+    name: Windows amd64
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            zip
+            mingw-w64-ucrt-x86_64-cc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-sdl3
+            mingw-w64-ucrt-x86_64-sdl3-image
+            mingw-w64-ucrt-x86_64-gtest
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Package
+        run: |
+          mkdir -p dist/paranoid
+          cp build/paranoid.exe dist/paranoid/
+          cp -r media dist/paranoid/
+          # Bundle the MinGW runtime DLLs the exe links against.
+          ldd build/paranoid.exe | awk '/ucrt64/ {print $3}' | sort -u \
+            | xargs -r -I{} cp {} dist/paranoid/
+          cd dist && zip -qr ../paranoid-windows-amd64.zip paranoid
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paranoid-windows-amd64
+          path: paranoid-windows-amd64.zip
