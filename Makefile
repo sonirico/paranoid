@@ -1,128 +1,46 @@
-#
-#  There exist several targets which are by default empty and which can be 
-#  used for execution of your targets. These targets are usually executed 
-#  before and after some main targets. They are: 
-#
-#     .build-pre:              called before 'build' target
-#     .build-post:             called after 'build' target
-#     .clean-pre:              called before 'clean' target
-#     .clean-post:             called after 'clean' target
-#     .clobber-pre:            called before 'clobber' target
-#     .clobber-post:           called after 'clobber' target
-#     .all-pre:                called before 'all' target
-#     .all-post:               called after 'all' target
-#     .help-pre:               called before 'help' target
-#     .help-post:              called after 'help' target
-#
-#  Targets beginning with '.' are not intended to be called on their own.
-#
-#  Main targets can be executed directly, and they are:
-#  
-#     build                    build a specific configuration
-#     clean                    remove built files from a configuration
-#     clobber                  remove all built files
-#     all                      build all configurations
-#     help                     print help mesage
-#  
-#  Targets .build-impl, .clean-impl, .clobber-impl, .all-impl, and
-#  .help-impl are implemented in nbproject/makefile-impl.mk.
-#
-#  Available make variables:
-#
-#     CND_BASEDIR                base directory for relative paths
-#     CND_DISTDIR                default top distribution directory (build artifacts)
-#     CND_BUILDDIR               default top build directory (object files, ...)
-#     CONF                       name of current configuration
-#     CND_PLATFORM_${CONF}       platform name (current configuration)
-#     CND_ARTIFACT_DIR_${CONF}   directory of build artifact (current configuration)
-#     CND_ARTIFACT_NAME_${CONF}  name of build artifact (current configuration)
-#     CND_ARTIFACT_PATH_${CONF}  path to build artifact (current configuration)
-#     CND_PACKAGE_DIR_${CONF}    directory of package (current configuration)
-#     CND_PACKAGE_NAME_${CONF}   name of package (current configuration)
-#     CND_PACKAGE_PATH_${CONF}   path to package (current configuration)
-#
-# NOCDDL
+BUILD_TYPE ?= Debug
+BUILD_DIR  := build/$(shell echo $(BUILD_TYPE) | tr '[:upper:]' '[:lower:]')
+JOBS       ?= $(shell nproc)
+CMAKE_FLAGS ?=
 
+.PHONY: help configure build run test release debug clean format format-check leak-check sanitize
 
-# Environment 
-MKDIR=mkdir
-CP=cp
-CCADMIN=CCadmin
+help: ## Show this help
+	@grep -hE '^[a-zA-Z_-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
 
+configure: ## Generate the CMake build tree
+	cmake -S . -B $(BUILD_DIR) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE) $(CMAKE_FLAGS)
 
-# build
-build: .build-post
+build: configure ## Compile the game and tests (BUILD_TYPE=Debug|Release)
+	cmake --build $(BUILD_DIR) -j $(JOBS)
 
-.build-pre:
-# Add your pre 'build' code here...
+run: build ## Build and launch the game
+	$(BUILD_DIR)/paranoid
 
-.build-post: .build-impl
-# Add your post 'build' code here...
+test: build ## Build and run the unit test suite
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
 
+release: ## Compile an optimized Release build
+	$(MAKE) BUILD_TYPE=Release build
 
-# clean
-clean: .clean-post
+debug: build ## Alias for the default Debug build
 
-.clean-pre:
-# Add your pre 'clean' code here...
+sanitize: ## Build and run tests under ASan/UBSan
+	$(MAKE) BUILD_DIR=build/asan CMAKE_FLAGS=-DPARANOID_SANITIZE=ON test
 
-.clean-post: .clean-impl
-# Add your post 'clean' code here...
+leak-check: build ## Run tests and a game smoke frame under valgrind
+	valgrind --leak-check=full --errors-for-leak-kinds=definite \
+		--error-exitcode=1 $(BUILD_DIR)/tests/paranoid_tests
+	valgrind --leak-check=full --errors-for-leak-kinds=definite \
+		--error-exitcode=1 $(BUILD_DIR)/paranoid --smoke
 
+SOURCES := $(shell find src tests -name '*.cpp' -o -name '*.hpp' -o -name '*.h')
 
-# clobber
-clobber: .clobber-post
+format: ## Reformat all sources in place with clang-format
+	clang-format -i $(SOURCES)
 
-.clobber-pre:
-# Add your pre 'clobber' code here...
+format-check: ## Fail if any source is not clang-format clean
+	clang-format --dry-run --Werror $(SOURCES)
 
-.clobber-post: .clobber-impl
-# Add your post 'clobber' code here...
-
-
-# all
-all: .all-post
-
-.all-pre:
-# Add your pre 'all' code here...
-
-.all-post: .all-impl
-# Add your post 'all' code here...
-
-
-# build tests
-build-tests: .build-tests-post
-
-.build-tests-pre:
-# Add your pre 'build-tests' code here...
-
-.build-tests-post: .build-tests-impl
-# Add your post 'build-tests' code here...
-
-
-# run tests
-test: .test-post
-
-.test-pre: build-tests
-# Add your pre 'test' code here...
-
-.test-post: .test-impl
-# Add your post 'test' code here...
-
-
-# help
-help: .help-post
-
-.help-pre:
-# Add your pre 'help' code here...
-
-.help-post: .help-impl
-# Add your post 'help' code here...
-
-
-
-# include project implementation makefile
-include nbproject/Makefile-impl.mk
-
-# include project make variables
-include nbproject/Makefile-variables.mk
+clean: ## Remove all build trees
+	rm -rf build
