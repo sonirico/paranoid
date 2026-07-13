@@ -25,6 +25,12 @@ class CBall : public CEntity
 
     bool collision_ball_brick(CBrick* b, const float dt);
 
+    void set_velocity(const engine::Vec2f& v);
+
+    // Multiplies the current speed and the base speed used after
+    // paddle bounces, so slow/fast bonuses persist.
+    void scale_velocity(float factor);
+
   private:
     void collision_ball_paddle();
 
@@ -41,7 +47,7 @@ class CBall : public CEntity
 
     bool removable = false;
 
-    int vel = 400;
+    float vel = 400;
 
     // Set by check_collision when the velocity flipped on that axis.
     bool dirx = false;

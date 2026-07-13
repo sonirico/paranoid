@@ -80,8 +80,8 @@ bool CBonus::collision_bonus_paddle(CPaddle* p)
 
     x2 = p->getPosition().x;
     y2 = p->getPosition().y;
-    w2 = p->get_bounds().width * 2;
-    h2 = p->get_bounds().height * 2;
+    w2 = p->get_size().x;
+    h2 = p->get_size().y;
 
     if ((x1 + w1) < x2)
         return false;
@@ -100,4 +100,9 @@ bool CBonus::collision_bonus_paddle(CPaddle* p)
 bool CBonus::is_removable() const
 {
     return this->removable;
+}
+
+game::game_bonus::bonus CBonus::get_type() const
+{
+    return this->type;
 }

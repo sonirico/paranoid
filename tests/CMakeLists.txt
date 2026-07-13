@@ -9,9 +9,11 @@ add_executable(paranoid_tests
     sprite_test.cpp
     texture_test.cpp
     sound_test.cpp
+    music_test.cpp
     stage_map_test.cpp
     resource_holder_test.cpp
     game_smoke_test.cpp
+    play_state_test.cpp
 )
 
 target_compile_definitions(paranoid_tests

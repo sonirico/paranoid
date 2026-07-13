@@ -23,6 +23,9 @@ class CEntity : public engine::Transformable, public engine::Drawable
 
     engine::FloatRect get_bounds() const;
 
+    // The entity's on-screen size (frame size times scale).
+    engine::Vec2f get_size() const;
+
     void stop_animation();
     void play_animation();
 

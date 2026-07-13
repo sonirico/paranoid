@@ -21,14 +21,13 @@ CPlayState::CPlayState(CGameContainer* gc)
 void CPlayState::init()
 {
     current_stage = 0;
+    this->lives = STARTING_LIVES;
 
     this->paddle = std::make_unique<CPaddle>(this);
 
     this->load_bricks();
 
-    auto b = std::make_unique<CBall>(this, this->paddle.get());
-    b->set_in_paddle();
-    this->balls.push_back(std::move(b));
+    this->spawn_ball();
 }
 
 void CPlayState::events()
@@ -46,13 +45,18 @@ void CPlayState::events()
                 break;
             }
         }
+
+        // Laser mode fires once per key press.
+        if (!this->space_was_down && this->paddle->has_laser())
+        {
+            this->fire_lasers();
+        }
     }
+    this->space_was_down = keys[SDL_SCANCODE_SPACE];
     if (keys[SDL_SCANCODE_A])
     {
         // Developer cheat: spawn an extra ball on the paddle.
-        auto b = std::make_unique<CBall>(this, this->paddle.get());
-        b->set_in_paddle();
-        this->balls.push_back(std::move(b));
+        this->spawn_ball();
     }
 }
 
@@ -61,6 +65,7 @@ int CPlayState::update(const float dt)
     this->update_paddle(dt);
     this->update_balls(dt);
     this->update_bonus(dt);
+    this->update_lasers(dt);
 
     if (this->update_bricks(dt))
     {
@@ -76,6 +81,22 @@ void CPlayState::render()
     this->render_bricks();
     this->render_balls();
     this->render_bonus();
+    this->render_lasers();
+    this->render_lives();
+}
+
+void CPlayState::render_lives()
+{
+    // One small paddle icon per remaining life, bottom-left corner.
+    engine::Sprite icon;
+    icon.setTexture(this->rh->get(game::game_textures::MAIN));
+    icon.setTextureRect({128, 72, 32, 8});
+
+    for (unsigned int i = 0; i < this->lives; ++i)
+    {
+        icon.setPosition(10.f + i * 38.f, game::HEIGHT - 18.f);
+        this->gc->window->draw(icon);
+    }
 }
 
 void CPlayState::clear()
@@ -83,6 +104,7 @@ void CPlayState::clear()
     this->balls.clear();
     this->bonus.clear();
     this->bricks.clear();
+    this->lasers.clear();
 }
 
 void CPlayState::update_balls(const float dt)
@@ -101,6 +123,36 @@ void CPlayState::update_balls(const float dt)
             ++it;
         }
     }
+
+    if (this->balls.empty())
+    {
+        this->lose_life();
+    }
+}
+
+void CPlayState::lose_life()
+{
+    this->lives--;
+
+    if (this->lives == 0)
+    {
+        // Game over: restart the whole run.
+        current_stage = 0;
+        this->lives = STARTING_LIVES;
+
+        this->bonus.clear();
+        this->load_bricks();
+        this->paddle->reset();
+    }
+
+    this->spawn_ball();
+}
+
+void CPlayState::spawn_ball()
+{
+    auto b = std::make_unique<CBall>(this, this->paddle.get());
+    b->set_in_paddle();
+    this->balls.push_back(std::move(b));
 }
 
 void CPlayState::update_bonus(const float dt)
@@ -111,15 +163,134 @@ void CPlayState::update_bonus(const float dt)
 
         if (b->is_removable())
         {
-            /* TODO: apply the bonus effect to the paddle. */
             it = this->bonus.erase(it);
         }
         else
         {
             b->update(dt);
-            b->collision_bonus_paddle(this->paddle.get());
+
+            if (b->collision_bonus_paddle(this->paddle.get()))
+            {
+                this->apply_bonus(b->get_type());
+            }
+
             ++it;
         }
+    }
+}
+
+void CPlayState::apply_bonus(game::game_bonus::bonus type)
+{
+    using namespace game::game_bonus;
+
+    switch (type)
+    {
+    case E:
+        this->paddle->reset_modes();
+        this->paddle->expand();
+        break;
+    case R:
+        this->paddle->reset_modes();
+        this->paddle->shrink();
+        break;
+    case C:
+        this->paddle->reset_modes();
+        this->paddle->set_sticky(true);
+        break;
+    case L:
+        this->paddle->reset_modes();
+        this->paddle->set_laser(true);
+        break;
+    case D:
+    {
+        // Multiball: mirror every current ball, capped to keep it sane.
+        const unsigned int MAX_BALLS = 8;
+        std::vector<CBall*> current;
+
+        for (auto& ball : this->balls)
+        {
+            current.push_back(ball.get());
+        }
+
+        for (CBall* ball : current)
+        {
+            if (this->balls.size() >= MAX_BALLS)
+            {
+                break;
+            }
+
+            auto twin = std::make_unique<CBall>(this, this->paddle.get());
+            twin->set_in_paddle(false);
+            twin->setPosition(ball->getPosition());
+            twin->set_velocity({-ball->get_velocity().x, ball->get_velocity().y});
+
+            this->balls.push_back(std::move(twin));
+        }
+        break;
+    }
+    case S:
+        for (auto& ball : this->balls)
+        {
+            ball->scale_velocity(0.7f);
+        }
+        break;
+    case P:
+        for (auto& ball : this->balls)
+        {
+            ball->scale_velocity(1.3f);
+        }
+        break;
+    case X:
+        this->lives++;
+        break;
+    default:
+        // B/M/N/T are on the sprite sheet but have no effect yet.
+        break;
+    }
+}
+
+void CPlayState::fire_lasers()
+{
+    const engine::Vec2f p_pos = this->paddle->getPosition();
+    const engine::Vec2f p_size = this->paddle->get_size();
+
+    auto left = std::make_unique<CLaser>(this);
+    left->setPosition(p_pos.x, p_pos.y - left->get_size().y);
+
+    auto right = std::make_unique<CLaser>(this);
+    right->setPosition(p_pos.x + p_size.x - right->get_size().x, p_pos.y - right->get_size().y);
+
+    this->lasers.push_back(std::move(left));
+    this->lasers.push_back(std::move(right));
+}
+
+void CPlayState::update_lasers(const float dt)
+{
+    for (auto it = this->lasers.begin(); it != this->lasers.end();)
+    {
+        CLaser* laser = it->get();
+
+        if (laser->is_removable())
+        {
+            it = this->lasers.erase(it);
+            continue;
+        }
+
+        laser->update(dt);
+
+        // The shot dies on the first brick it damages; the brick's
+        // removal (and bonus drop) happens in update_bricks.
+        for (auto& brick : this->bricks)
+        {
+            if (laser->collision_laser_brick(brick.get()))
+            {
+                brick->quit_life();
+                brick->play_animation();
+                break;
+            }
+        }
+
+        ++it;
     }
 }
 
@@ -195,6 +366,14 @@ void CPlayState::render_paddle()
     this->gc->window->draw(*(this->paddle));
 }
 
+void CPlayState::render_lasers()
+{
+    for (auto& laser : this->lasers)
+    {
+        this->gc->window->draw(*laser);
+    }
+}
+
 void CPlayState::load_bricks()
 {
     this->bricks.clear();
@@ -237,7 +416,7 @@ void CPlayState::load_bricks()
 
 void CPlayState::next_stage()
 {
-    current_stage++;
+    current_stage = next_stage_with_bricks(current_stage);
 
     this->balls.clear();
     this->bonus.clear();
@@ -246,9 +425,7 @@ void CPlayState::next_stage()
 
     this->paddle->reset();
 
-    auto b = std::make_unique<CBall>(this, this->paddle.get());
-    b->set_in_paddle();
-    this->balls.push_back(std::move(b));
+    this->spawn_ball();
 }
 
 void CPlayState::insert_bonus(CBrick* brick)
@@ -308,4 +485,24 @@ void CPlayState::insert_bonus(CBrick* brick)
 unsigned int CPlayState::get_current_stage()
 {
     return current_stage;
+}
+
+unsigned int CPlayState::get_lives() const
+{
+    return this->lives;
+}
+
+std::list<std::unique_ptr<CBall>>& CPlayState::get_balls()
+{
+    return this->balls;
+}
+
+std::list<std::unique_ptr<CLaser>>& CPlayState::get_lasers()
+{
+    return this->lasers;
+}
+
+CPaddle* CPlayState::get_paddle()
+{
+    return this->paddle.get();
 }

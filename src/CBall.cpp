@@ -62,9 +62,8 @@ void CBall::set_in_paddle()
     engine::Vec2f pos;
 
     engine::Vec2f p_pos = this->paddle->getPosition();
-    engine::FloatRect p_bounds = this->paddle->get_bounds();
 
-    pos.x = p_pos.x + (p_bounds.width * 2 - this->bounds.x) / 2;
+    pos.x = p_pos.x + (this->paddle->get_size().x - this->bounds.x) / 2;
     pos.y = p_pos.y - this->bounds.y;
 
     this->setPosition(pos);
@@ -132,8 +131,8 @@ void CBall::collision_ball_paddle()
 
     x2 = this->paddle->getPosition().x;
     y2 = this->paddle->getPosition().y;
-    w2 = this->paddle->get_bounds().width * 2;
-    h2 = this->paddle->get_bounds().height * 2;
+    w2 = this->paddle->get_size().x;
+    h2 = this->paddle->get_size().y;
 
     if ((x1 + w1) < x2)
         return;
@@ -177,6 +176,13 @@ void CBall::collision_ball_paddle()
         new_pos.y = y2 - w1 - 1;
         new_pos.x = x1;
         this->setPosition(new_pos);
+
+        // A sticky paddle catches the ball instead of bouncing it.
+        if (this->paddle->is_sticky())
+        {
+            this->set_in_paddle();
+            return;
+        }
 
         float cp = (x2 + (w2 / 2)); // Paddle centre.
         float cb = (x1 + (w1 / 2)); // Ball centre.
@@ -304,4 +310,15 @@ bool CBall::check_collision(CBrick* b)
 bool CBall::is_removable() const
 {
     return this->removable;
+}
+
+void CBall::set_velocity(const engine::Vec2f& v)
+{
+    this->velocity = v;
+}
+
+void CBall::scale_velocity(float factor)
+{
+    this->velocity *= factor;
+    this->vel *= factor;
 }

@@ -17,6 +17,11 @@ engine::FloatRect CEntity::get_bounds() const
     return this->animated_sprite.getGlobalBounds();
 }
 
+engine::Vec2f CEntity::get_size() const
+{
+    return this->bounds;
+}
+
 void CEntity::stop_animation()
 {
     this->animated_sprite.stop();

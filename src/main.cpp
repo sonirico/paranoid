@@ -4,6 +4,7 @@
 #include "assets.h"
 #include "engine/AudioDevice.hpp"
 #include "engine/Clock.hpp"
+#include "engine/Music.hpp"
 #include "engine/Sprite.hpp"
 #include "engine/Window.hpp"
 
@@ -68,6 +69,18 @@ int main(int argc, char** argv)
         CGameContainer gc(&window, &audio, &rh);
         CGameStateManager gsm(&gc);
 
+        engine::Music music(audio);
+
+        if (music.loadFromFile("media/music/arkanoid.ogg"))
+        {
+            music.setVolume(30);
+            music.play();
+        }
+        else
+        {
+            SDL_Log("Music failed to load, continuing without it");
+        }
+
         engine::Sprite background;
         background.setTexture(rh.get(game::game_textures::BACKGROUND));
 
@@ -88,6 +101,8 @@ int main(int argc, char** argv)
                 gc.events();
                 gsm.update(dt);
             }
+
+            music.update();
 
             window.clear();
 

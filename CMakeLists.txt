@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.24)
 project(paranoid
     VERSION 0.1.0
     DESCRIPTION "Paranoid — an Arkanoid clone"
-    LANGUAGES CXX
+    LANGUAGES C CXX
 )
 
 set(CMAKE_CXX_STANDARD 20)
@@ -35,15 +35,21 @@ add_library(paranoid_engine STATIC
     src/engine/Animation.cpp
     src/engine/AudioDevice.cpp
     src/engine/Clock.cpp
+    src/engine/Music.cpp
     src/engine/Sound.cpp
     src/engine/SoundBuffer.cpp
     src/engine/Sprite.cpp
     src/engine/Texture.cpp
     src/engine/Transformable.cpp
     src/engine/Window.cpp
+    third_party/stb/stb_vorbis.c
 )
 
 target_include_directories(paranoid_engine PUBLIC src)
+target_include_directories(paranoid_engine PRIVATE third_party/stb)
+
+# Vendored third-party code is not held to our warning level.
+set_source_files_properties(third_party/stb/stb_vorbis.c PROPERTIES COMPILE_OPTIONS "-w")
 
 target_link_libraries(paranoid_engine
     PUBLIC
@@ -61,6 +67,7 @@ add_library(paranoid_game STATIC
     src/CEntity.cpp
     src/CGameContainer.cpp
     src/CGameStateManager.cpp
+    src/CLaser.cpp
     src/CMapState.cpp
     src/CPaddle.cpp
     src/CPlayState.cpp

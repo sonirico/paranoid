@@ -21,6 +21,8 @@ class CBonus : public CEntity
     bool collision_bonus_paddle(CPaddle* p);
     bool is_removable() const;
 
+    game::game_bonus::bonus get_type() const;
+
   private:
     // Picks the animation strip for the bonus letter.
     void settings();

@@ -73,6 +73,54 @@ void CPaddle::reset()
     this->setPosition((game::WIDTH - this->bounds.x) / 2, game::HEIGHT - 100);
 }
 
+void CPaddle::reset_modes()
+{
+    this->apply_width_factor(1.f);
+    this->sticky = false;
+    this->laser = false;
+}
+
+void CPaddle::expand()
+{
+    this->apply_width_factor(1.5f);
+}
+
+void CPaddle::shrink()
+{
+    this->apply_width_factor(0.65f);
+}
+
+void CPaddle::set_sticky(bool b)
+{
+    this->sticky = b;
+}
+
+bool CPaddle::is_sticky() const
+{
+    return this->sticky;
+}
+
+void CPaddle::set_laser(bool b)
+{
+    this->laser = b;
+}
+
+bool CPaddle::has_laser() const
+{
+    return this->laser;
+}
+
+void CPaddle::apply_width_factor(float factor)
+{
+    this->width_factor = factor;
+
+    this->setScale({this->scalation.x * factor, this->scalation.y});
+
+    this->bounds.x = this->animated_sprite.getLocalBounds().width * this->scalation.x * factor;
+
+    this->check_bounds();
+}
+
 void CPaddle::check_bounds()
 {
     engine::Vec2f pos = this->getPosition();
