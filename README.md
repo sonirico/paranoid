@@ -18,39 +18,39 @@ Dependencies (Fedora): `SDL3-devel SDL3_image-devel gtest-devel cmake gcc-c++`.
 
 | Action                          | Keyboard        | Mouse      | Gamepad        |
 |---------------------------------|-----------------|------------|----------------|
-| Move the paddle                 | ← / →           | move       | left stick / d-pad |
+| Move the paddle                 | Left / Right           | move       | left stick / d-pad |
 | Release the ball / fire lasers  | Space           | left click | south button   |
-| Pause (Resume / Main menu / Quit) | Escape        | —          | Start          |
-| Fullscreen                      | F11             | —          | —              |
+| Pause (Resume / Main menu / Quit) | Escape        | -          | Start          |
+| Fullscreen                      | F11             | -          | -              |
 | Menus: navigate / adjust / pick | arrows / Enter  | hover / click | d-pad / south |
 
-The paddle follows the mouse at the same top speed as the keyboard —
+The paddle follows the mouse at the same top speed as the keyboard -
 no input is faster than another.
 
 ## Capsules
 
-10% of destroyed bricks drop a capsule. Mode capsules (marked ⏱) last
+10% of destroyed bricks drop a capsule. Mode capsules (marked "timed") last
 10 seconds and any new capsule cancels the one in effect.
 
 | Capsule | Effect |
 |---------|--------|
-| ![B](docs/capsules/b.png) | **Break** — jump straight to the next stage |
-| ![C](docs/capsules/c.png) | **Catch** ⏱ — the paddle holds the ball; release with Space |
-| ![D](docs/capsules/d.png) | **Disruption** — the ball splits in three |
-| ![E](docs/capsules/e.png) | **Expand** ⏱ — wider paddle |
-| ![L](docs/capsules/l.png) | **Laser** ⏱ — the paddle fires with Space |
-| ![M](docs/capsules/m.png) | **Megaball** ⏱ — the ball smashes through bricks without bouncing |
-| ![N](docs/capsules/n.png) | **Net** ⏱ — a barrier on the floor bounces the ball back |
-| ![P](docs/capsules/p.png) | **Speed up** — faster balls |
-| ![R](docs/capsules/r.png) | **Reduce** ⏱ — narrower paddle |
-| ![S](docs/capsules/s.png) | **Slow** — slower balls |
-| ![T](docs/capsules/t.png) | **Twist** ⏱ — a moving paddle puts spin on the ball (Magnus curve) |
+| ![B](docs/capsules/b.png) | **Break** - jump straight to the next stage |
+| ![C](docs/capsules/c.png) | **Catch** (timed) - the paddle holds the ball; release with Space |
+| ![D](docs/capsules/d.png) | **Disruption** - the ball splits in three |
+| ![E](docs/capsules/e.png) | **Expand** (timed) - wider paddle |
+| ![L](docs/capsules/l.png) | **Laser** (timed) - the paddle fires with Space |
+| ![M](docs/capsules/m.png) | **Megaball** (timed) - the ball smashes through bricks without bouncing |
+| ![N](docs/capsules/n.png) | **Net** (timed) - a barrier on the floor bounces the ball back |
+| ![P](docs/capsules/p.png) | **Speed up** - faster balls |
+| ![R](docs/capsules/r.png) | **Reduce** (timed) - narrower paddle |
+| ![S](docs/capsules/s.png) | **Slow** - slower balls |
+| ![T](docs/capsules/t.png) | **Twist** (timed) - a moving paddle puts spin on the ball (Magnus curve) |
 | ![X](docs/capsules/x.png) | **Extra life** |
 
 ## Scoring
 
-A brick is worth 10 points per life it takes to kill — silver (2 lives)
-scores 20, gold (3) scores 30 — awarded only when it dies. Chipping a
+A brick is worth 10 points per life it takes to kill - silver (2 lives)
+scores 20, gold (3) scores 30 - awarded only when it dies. Chipping a
 life scores nothing, and indestructible bricks never score. The high
 score persists across runs.
 
@@ -58,7 +58,7 @@ score persists across runs.
 
 Stages are plain-text ASCII art in [`media/stages/`](media/stages/):
 15 lines of 15 characters, one per brick, played in filename order.
-See [media/stages/README.md](media/stages/README.md) for the legend —
+See [media/stages/README.md](media/stages/README.md) for the legend -
 add a `.txt` file and it is in the game.
 
 ## Map editor
@@ -76,13 +76,13 @@ format, so a finished map ships by copying it into `media/stages/`.
 ## Options
 
 Scale mode (letterbox keeps the aspect, stretch fills the window),
-fullscreen, and separate music / effects volumes, adjusted with ← / →.
+fullscreen, and separate music / effects volumes, adjusted with Left / Right.
 Settings and the high score persist under `~/.local/share/paranoid/`.
 
 ## Development
 
 The code is split in two layers: `src/engine/` is a small reusable,
-SFML-shaped façade over SDL3 (window, sprites, text, audio, gamepad),
+SFML-shaped facade over SDL3 (window, sprites, text, audio, gamepad),
 and `src/C*.{hpp,cpp}` is the game itself (states, entities, menus).
 
 ```sh

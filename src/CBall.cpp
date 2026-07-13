@@ -48,6 +48,7 @@ void CBall::update(const float dt)
     if (this->in_paddle)
     {
         this->follow_paddle();
+        this->trail.clear();
     }
     else
     {
@@ -56,9 +57,44 @@ void CBall::update(const float dt)
         this->apply_magnus(dt);
         this->move(this->velocity * dt);
         this->collision_ball_paddle();
+
+        this->trail.push_back(this->getPosition());
+
+        if (this->trail.size() > TRAIL_LENGTH)
+        {
+            this->trail.erase(this->trail.begin());
+        }
     }
 
     this->check_bounds();
+}
+
+void CBall::draw(engine::Window& target) const
+{
+    // A curving ball leaves a comet tail: orange for clockwise spin,
+    // cyan for the other way, brighter the harder it spins.
+    if (std::abs(this->spin) > TRAIL_MIN_SPIN)
+    {
+        const float intensity = std::min(1.f, std::abs(this->spin) / (MAX_SPIN / 2));
+        const engine::Color base =
+            this->spin > 0 ? engine::Color{255, 160, 40, 255} : engine::Color{80, 220, 255, 255};
+
+        for (unsigned int i = 0; i < this->trail.size(); ++i)
+        {
+            // Older segments are smaller and fainter.
+            const float age = (i + 1.f) / (this->trail.size() + 1.f);
+
+            engine::Color color = base;
+            color.a = static_cast<std::uint8_t>(age * intensity * 150);
+
+            const engine::Vec2f size = this->bounds * (0.3f + 0.6f * age);
+            const engine::Vec2f offset = (this->bounds - size) * 0.5f;
+
+            target.drawRect(this->trail[i] + offset, size, color);
+        }
+    }
+
+    CEntity::draw(target);
 }
 
 void CBall::apply_magnus(const float dt)

@@ -27,6 +27,9 @@ class CBall : public CEntity
     bool is_in_paddle() const;
     bool is_removable() const;
 
+    // Draws the spin trail behind the sprite when the ball is curving.
+    void draw(engine::Window& target) const override;
+
     // Sweeps this tick's flight path against every brick, bouncing off
     // each one it strikes in path order. Returns the bricks that were hit.
     std::vector<CBrick*> collision_ball_bricks(const std::list<std::unique_ptr<CBrick>>& bricks);
@@ -124,6 +127,13 @@ class CBall : public CEntity
 
     // A tick's flight path bounces off at most this many bricks.
     static constexpr unsigned int MAX_BRICK_BOUNCES = 3;
+
+    // Recent tick positions, oldest first; rendered as a fading trail
+    // while the ball carries enough spin to visibly curve.
+    std::vector<engine::Vec2f> trail;
+
+    static constexpr unsigned int TRAIL_LENGTH = 8;
+    static constexpr float TRAIL_MIN_SPIN = 1.f;
 
     // Separation left after each bounce so float rounding cannot
     // re-detect the face the ball just left.

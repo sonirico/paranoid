@@ -21,7 +21,7 @@ jobs:
     # Fedora ships SDL3; Ubuntu LTS does not yet.
     container: fedora:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: >-
@@ -44,7 +44,7 @@ jobs:
           cp -r media dist/paranoid/
           tar -C dist -czf paranoid-linux-${{ matrix.arch }}.tar.gz paranoid
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: paranoid-linux-${{ matrix.arch }}
           path: paranoid-linux-${{ matrix.arch }}.tar.gz
@@ -56,7 +56,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: msys2/setup-msys2@v2
         with:
@@ -90,7 +90,7 @@ jobs:
             | xargs -r -I{} cp {} dist/paranoid/
           cd dist && zip -qr ../paranoid-windows-amd64.zip paranoid
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: paranoid-windows-amd64
           path: paranoid-windows-amd64.zip
@@ -103,7 +103,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           merge-multiple: true
 
