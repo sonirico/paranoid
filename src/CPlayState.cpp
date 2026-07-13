@@ -97,11 +97,6 @@ void CPlayState::events()
         }
     }
     this->fire_was_down = fire;
-    if (keys[SDL_SCANCODE_A])
-    {
-        // Developer cheat: spawn an extra ball on the paddle.
-        this->spawn_ball();
-    }
 }
 
 int CPlayState::update(const float dt)
