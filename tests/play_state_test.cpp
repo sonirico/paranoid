@@ -69,7 +69,11 @@ class PlayStateTest : public ::testing::Test
     // Runs enough frozen frames to leave the ROUND/READY intro card.
     void skipIntro()
     {
-        for (unsigned int i = 0; i < game::FRAMES * 3; ++i)
+        const unsigned int frames =
+            static_cast<unsigned int>(CPlayState::ROUND_INTRO_DURATION * game::FRAMES) +
+            game::FRAMES;
+
+        for (unsigned int i = 0; i < frames; ++i)
         {
             play_state->update(game::TIME_PER_FRAME);
         }

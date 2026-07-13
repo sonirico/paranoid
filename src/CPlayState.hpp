@@ -65,6 +65,9 @@ class CPlayState : public CState
     // How long a mode capsule stays in effect before wearing off.
     static constexpr float BONUS_DURATION = 10.f;
 
+    // Long enough for the 3.3 s round jingle to finish plus a beat.
+    static constexpr float ROUND_INTRO_DURATION = 4.f;
+
     // Applies a collected bonus capsule to the game.
     void apply_bonus(game::game_bonus::bonus type);
 
@@ -162,7 +165,6 @@ class CPlayState : public CState
     float phase_time = 0;
     bool intro_shows_round = true;
 
-    static constexpr float ROUND_INTRO_DURATION = 2.f;
     static constexpr float READY_DURATION = 1.5f;
     static constexpr float GAME_OVER_DURATION = 3.f;
 
