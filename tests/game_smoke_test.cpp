@@ -98,6 +98,23 @@ TEST_F(GameSmokeTest, RunsMenuStateForOneSecondWithoutCrashing)
     }
 }
 
+TEST_F(GameSmokeTest, RunsMapEditorForOneSecondWithoutCrashing)
+{
+    CGameStateManager manager(container.get(), game::game_states::MAP);
+
+    const float dt = 1.f / game::FRAMES;
+
+    for (unsigned int frame = 0; frame < game::FRAMES; ++frame)
+    {
+        container->events();
+        manager.update(dt);
+
+        window->clear();
+        manager.render();
+        window->display();
+    }
+}
+
 TEST_F(GameSmokeTest, BrickLosesLifeAndBecomesRemovable)
 {
     CGameStateManager manager(container.get(), game::game_states::PLAY);

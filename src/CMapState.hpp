@@ -8,12 +8,13 @@
 
 #include <list>
 #include <memory>
+#include <string>
 
 class CGameContainer;
 struct SSelector;
 
 // The stage editor: move a selector over the grid, place brick types,
-// and dump the resulting map to stdout.
+// save/load the map on disk (S/L) or dump it to stdout (Space).
 class CMapState : public CState
 {
   public:
@@ -34,6 +35,14 @@ class CMapState : public CState
     void render_balls();
     void render_bricks();
     void render_paddle();
+    void render_status();
+
+    // The edited map persists to <data_dir>/custom.map.
+    void save_map();
+    void load_map();
+
+    // Flashes a short confirmation ("SAVED", "LOADED") over the grid.
+    void show_status(const std::string& text);
 
   private:
     std::unique_ptr<CPaddle> paddle;
@@ -42,4 +51,14 @@ class CMapState : public CState
     std::list<std::unique_ptr<CBrick>> bricks;
 
     std::unique_ptr<SSelector> selector;
+
+    std::string status;
+    float status_time = 0;
+
+    bool esc_was_down = false;
+    bool save_was_down = false;
+    bool load_was_down = false;
+
+    // Escape asks to leave; update() returns to the menu.
+    bool back_requested = false;
 };

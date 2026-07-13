@@ -3,9 +3,11 @@
 #include "CGameContainer.hpp"
 #include "CResourceHolder.hpp"
 #include "engine/Sprite.hpp"
+#include "engine/Text.hpp"
 
 #include <SDL3/SDL.h>
 
+#include <fstream>
 #include <iostream>
 
 using namespace game::game_states;
@@ -239,6 +241,30 @@ void CMapState::events()
 {
     const bool* keys = SDL_GetKeyboardState(nullptr);
 
+    const bool esc = keys[SDL_SCANCODE_ESCAPE];
+
+    if (esc && !this->esc_was_down)
+    {
+        this->back_requested = true;
+    }
+    this->esc_was_down = esc;
+
+    const bool save = keys[SDL_SCANCODE_S];
+
+    if (save && !this->save_was_down)
+    {
+        this->save_map();
+    }
+    this->save_was_down = save;
+
+    const bool load = keys[SDL_SCANCODE_L];
+
+    if (load && !this->load_was_down)
+    {
+        this->load_map();
+    }
+    this->load_was_down = load;
+
     if (keys[SDL_SCANCODE_SPACE])
     {
         this->selector->print_map();
@@ -272,13 +298,99 @@ void CMapState::events()
 
 int CMapState::update(const float dt)
 {
+    if (this->back_requested)
+    {
+        return MENU;
+    }
+
     this->update_paddle(dt);
     this->update_balls(dt);
     this->update_bricks(dt);
 
     this->selector->update(dt);
 
+    if (this->status_time > 0)
+    {
+        this->status_time -= dt;
+    }
+
     return NULLSTATE;
+}
+
+void CMapState::save_map()
+{
+    if (this->gc->data_dir.empty())
+    {
+        return;
+    }
+
+    std::ofstream file(this->gc->data_dir + "custom.map");
+
+    if (!file)
+    {
+        this->show_status("SAVE FAILED");
+        return;
+    }
+
+    for (unsigned int i = 0; i < LINES; i++)
+    {
+        for (unsigned int j = 0; j < BRICKS_PER_LINE; j++)
+        {
+            file << this->selector->brick_type_map[i][j] << ' ';
+        }
+    }
+
+    this->show_status("SAVED");
+}
+
+void CMapState::load_map()
+{
+    if (this->gc->data_dir.empty())
+    {
+        return;
+    }
+
+    std::ifstream file(this->gc->data_dir + "custom.map");
+
+    if (!file)
+    {
+        this->show_status("NO SAVED MAP");
+        return;
+    }
+
+    int loaded[LINES][BRICKS_PER_LINE];
+
+    for (unsigned int i = 0; i < LINES; i++)
+    {
+        for (unsigned int j = 0; j < BRICKS_PER_LINE; j++)
+        {
+            int type = 0;
+
+            if (!(file >> type) || type < 0 || type >= static_cast<int>(COUNT))
+            {
+                this->show_status("LOAD FAILED");
+                return;
+            }
+
+            loaded[i][j] = type;
+        }
+    }
+
+    for (unsigned int i = 0; i < LINES; i++)
+    {
+        for (unsigned int j = 0; j < BRICKS_PER_LINE; j++)
+        {
+            this->selector->brick_type_map[i][j] = loaded[i][j];
+        }
+    }
+
+    this->show_status("LOADED");
+}
+
+void CMapState::show_status(const std::string& text)
+{
+    this->status = text;
+    this->status_time = 2.f;
 }
 
 void CMapState::clear()
@@ -294,6 +406,25 @@ void CMapState::render()
     this->render_bricks();
 
     this->gc->window->draw(*this->selector);
+
+    this->render_status();
+}
+
+void CMapState::render_status()
+{
+    if (this->status_time <= 0)
+    {
+        return;
+    }
+
+    engine::Text text;
+    text.setFont(this->gc->font);
+    text.setString(this->status);
+    text.setScale({2.f, 2.f});
+    text.setColor(engine::Color::Yellow);
+    text.setPosition((game::WIDTH - text.getGlobalBounds().width) / 2, 40.f);
+
+    this->gc->window->draw(text);
 }
 
 void CMapState::update_balls(const float dt)

@@ -18,7 +18,8 @@ void CMenuState::init()
     this->gc->play_music("media/music/arkanoid.ogg");
 
     this->menu = std::make_unique<CMenu>(
-        this->gc, std::vector<std::string>{"PLAY", "OPTIONS", "QUIT"}, game::WIDTH / 2.f, 300.f);
+        this->gc, std::vector<std::string>{"PLAY", "OPTIONS", "EDITOR", "QUIT"}, game::WIDTH / 2.f,
+        300.f);
 
     this->options_menu = std::make_unique<CMenu>(
         this->gc, std::vector<std::string>{"", "", "", "", "BACK"}, game::WIDTH / 2.f, 280.f);
@@ -49,6 +50,8 @@ int CMenuState::update(const float dt)
             this->in_options = true;
             break;
         case 2:
+            return MAP;
+        case 3:
             this->gc->window->close();
             break;
         }

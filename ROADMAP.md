@@ -39,4 +39,4 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Soporte de gamepad: stick/d-pad mueven la pala, Sur = disparo/activar, Start = pausa; hot-plug
 - [x] Ajustes de volumen (música y fx) en Options, persistidos en `settings`
 - [x] Cheat de la tecla `A` solo en builds con `DEV_MODE` (`make dev`)
-- [ ] Editor de mapas: guardar/cargar niveles (`CMapState` solo imprime a stdout)
+- [x] Editor de mapas: entrada EDITOR en el menú, S guarda / L carga `custom.map`, Espacio vuelca a stdout, Escape vuelve al menú
