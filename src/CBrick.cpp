@@ -132,3 +132,34 @@ unsigned int CBrick::get_score() const
 {
     return this->score;
 }
+
+engine::Color CBrick::get_color() const
+{
+    using namespace game::game_bricks;
+
+    switch (this->type)
+    {
+    case RED:
+        return {216, 40, 0, 255};
+    case ORANGE:
+        return {252, 152, 56, 255};
+    case YELLOW:
+        return {248, 216, 0, 255};
+    case GREEN:
+        return {0, 168, 0, 255};
+    case AQUA:
+        return {0, 232, 216, 255};
+    case BLUE:
+        return {0, 112, 236, 255};
+    case PURPPLE:
+        return {216, 40, 200, 255};
+    case WHITE:
+        return {252, 252, 252, 255};
+    case SILVER:
+        return {188, 188, 188, 255};
+    case GOLD:
+        return {240, 188, 60, 255};
+    default:
+        return engine::Color::White;
+    }
+}

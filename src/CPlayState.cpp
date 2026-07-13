@@ -106,6 +106,13 @@ void CPlayState::events()
 
 int CPlayState::update(const float dt)
 {
+    // The shake decays in any phase: it may start on the very tick a
+    // card (READY, GAME OVER) freezes the game.
+    if (this->shake_time > 0)
+    {
+        this->shake_time -= dt;
+    }
+
     if (this->phase == Phase::Intro)
     {
         this->phase_time -= dt;
@@ -158,6 +165,7 @@ int CPlayState::update(const float dt)
 
     this->update_lasers(dt);
     this->update_active_bonus(dt);
+    this->update_particles(dt);
 
     if (this->update_bricks(dt))
     {
@@ -167,12 +175,84 @@ int CPlayState::update(const float dt)
     return NULLSTATE;
 }
 
+void CPlayState::spawn_brick_particles(CBrick* brick)
+{
+    const engine::Vec2f center = brick->getPosition() + brick->get_size() * 0.5f;
+    const engine::Color color = brick->get_color();
+
+    for (unsigned int i = 0; i < PARTICLES_PER_BRICK; ++i)
+    {
+        const float angle = (std::rand() % 360) * 3.14159265f / 180.f;
+        const float speed = 60.f + std::rand() % 140;
+
+        Particle p;
+        p.pos = center;
+        p.vel = {std::cos(angle) * speed, std::sin(angle) * speed - 60.f};
+        p.life = 0.4f + (std::rand() % 30) / 100.f;
+        p.color = color;
+
+        this->particles.push_back(p);
+    }
+}
+
+void CPlayState::update_particles(const float dt)
+{
+    for (auto it = this->particles.begin(); it != this->particles.end();)
+    {
+        it->life -= dt;
+
+        if (it->life <= 0)
+        {
+            it = this->particles.erase(it);
+            continue;
+        }
+
+        it->vel.y += PARTICLE_GRAVITY * dt;
+        it->pos += it->vel * dt;
+
+        ++it;
+    }
+}
+
+void CPlayState::render_particles()
+{
+    for (const Particle& p : this->particles)
+    {
+        engine::Color color = p.color;
+
+        // Fade out over the particle's lifetime.
+        color.a = static_cast<std::uint8_t>(std::min(1.f, p.life / 0.4f) * 255);
+
+        this->gc->window->drawRect(p.pos, {3.f, 3.f}, color);
+    }
+}
+
+void CPlayState::start_shake(float duration, float strength)
+{
+    this->shake_time = duration;
+    this->shake_strength = strength;
+}
+
+std::size_t CPlayState::get_particle_count() const
+{
+    return this->particles.size();
+}
+
 void CPlayState::render()
 {
+    if (this->shake_time > 0)
+    {
+        const engine::Vec2f offset{(std::rand() % 200 - 100) / 100.f * this->shake_strength,
+                                   (std::rand() % 200 - 100) / 100.f * this->shake_strength};
+
+        this->gc->window->setViewOffset(offset);
+    }
+
     this->render_paddle();
     this->render_bricks();
     this->render_balls();
     this->render_bonus();
+    this->render_particles();
     this->render_lasers();
     this->render_lives();
     this->render_active_bonus();
@@ -444,12 +524,16 @@ void CPlayState::lose_life()
         this->phase = Phase::GameOver;
         this->phase_time = GAME_OVER_DURATION;
 
+        this->start_shake(0.5f, 10.f);
+
         return;
     }
 
     this->spawn_ball();
 
     this->enter_intro(false);
+
+    this->start_shake(0.35f, 6.f);
 }
 
 void CPlayState::spawn_ball()
@@ -726,6 +810,7 @@ bool CPlayState::update_bricks(const float dt)
             this->score += brick->get_score();
             this->high_score = std::max(this->high_score, this->score);
 
+            this->spawn_brick_particles(brick);
             this->insert_bonus(brick);
             it = this->bricks.erase(it);
 

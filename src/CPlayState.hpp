@@ -9,8 +9,10 @@
 #include "CState.hpp"
 #include "assets.h"
 
+#include <cstddef>
 #include <list>
 #include <memory>
+#include <vector>
 
 class CGameContainer;
 
@@ -58,6 +60,8 @@ class CPlayState : public CState
     // The paddle-mode capsule currently in effect (COUNT means none).
     game::game_bonus::bonus get_active_bonus() const;
 
+    std::size_t get_particle_count() const;
+
     // How long a mode capsule stays in effect before wearing off.
     static constexpr float BONUS_DURATION = 10.f;
 
@@ -91,6 +95,22 @@ class CPlayState : public CState
 
     // Drops every mode: paddle modes and per-ball megaball/net flags.
     void cancel_active_bonus();
+
+    // A short-lived colored square from a dying brick.
+    struct Particle
+    {
+        engine::Vec2f pos;
+        engine::Vec2f vel;
+        float life = 0;
+        engine::Color color;
+    };
+
+    void spawn_brick_particles(CBrick* brick);
+    void update_particles(const float dt);
+    void render_particles();
+
+    // Kicks the screen sideways for a moment (life loss, game over).
+    void start_shake(float duration, float strength);
 
     // Called when the last ball is lost; restarts the run at 0 lives.
     void lose_life();
@@ -145,4 +165,12 @@ class CPlayState : public CState
     // A break capsule (B) was caught: jump stages once the bonus pass
     // finishes, so the capsule list is not cleared mid-iteration.
     bool break_pending = false;
+
+    std::vector<Particle> particles;
+
+    float shake_time = 0;
+    float shake_strength = 0;
+
+    static constexpr float PARTICLE_GRAVITY = 400.f;
+    static constexpr unsigned int PARTICLES_PER_BRICK = 10;
 };

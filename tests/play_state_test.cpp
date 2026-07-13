@@ -419,6 +419,28 @@ TEST_F(PlayStateTest, DestroyingABrickScoresTenPerLife)
     EXPECT_EQ(play_state->get_high_score(), 10u);
 }
 
+TEST_F(PlayStateTest, DyingBrickBurstsIntoParticlesThatExpire)
+{
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_TRUE(play_state->get_bricks().empty());
+    EXPECT_GT(play_state->get_particle_count(), 0u);
+
+    // Particles live well under two seconds.
+    for (unsigned int i = 0; i < game::FRAMES * 2; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_EQ(play_state->get_particle_count(), 0u);
+}
+
 TEST_F(PlayStateTest, ChippedBricksOnlyScoreWhenKilled)
 {
     // Silver takes two hits; chipping the first life scores nothing.

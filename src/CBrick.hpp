@@ -3,6 +3,7 @@
 #include "CEntity.hpp"
 #include "assets.h"
 #include "engine/Animation.hpp"
+#include "engine/Color.hpp"
 
 #include <vector>
 
@@ -20,6 +21,9 @@ class CBrick : public CEntity
     bool is_removable() const;
 
     unsigned int get_score() const;
+
+    // The brick's dominant sprite color, e.g. for death particles.
+    engine::Color get_color() const;
 
   public:
     game::game_bricks::bricks type;

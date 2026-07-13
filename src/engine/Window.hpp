@@ -43,9 +43,15 @@ class Window
     // fullscreen or letterbox bars.
     Vec2f getMousePosition() const;
 
+    // Shifts everything drawn afterwards (screen shake); display()
+    // resets it for the next frame.
+    void setViewOffset(const Vec2f& offset);
+
     void clear(const Color& color = Color::Black);
     void draw(const Drawable& drawable);
     void drawLine(const Vec2f& from, const Vec2f& to, const Color& color = Color::White);
+    // Filled rectangle; the color's alpha blends over what's below.
+    void drawRect(const Vec2f& pos, const Vec2f& size, const Color& color);
     // Renders SDL's built-in 8x8 monospace debug font, scaled.
     void drawText(const Vec2f& pos, const std::string& text, const Color& color = Color::White,
                   float scale = 1.f);

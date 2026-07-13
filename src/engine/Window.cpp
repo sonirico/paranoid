@@ -16,6 +16,9 @@ Window::Window(const std::string& title, int width, int height) : m_width(width)
     // Cap the frame rate to the display's refresh instead of busy-looping.
     SDL_SetRenderVSync(m_renderer, 1);
 
+    // Primitives with translucent colors (particles) blend over the scene.
+    SDL_SetRenderDrawBlendMode(m_renderer, SDL_BLENDMODE_BLEND);
+
     // The game always renders at its fixed size; SDL maps it onto
     // whatever the window really measures.
     setScaleMode(m_scale_mode);
@@ -105,6 +108,14 @@ void Window::drawLine(const Vec2f& from, const Vec2f& to, const Color& color)
     SDL_RenderLine(m_renderer, from.x, from.y, to.x, to.y);
 }
 
+void Window::drawRect(const Vec2f& pos, const Vec2f& size, const Color& color)
+{
+    const SDL_FRect rect{pos.x, pos.y, size.x, size.y};
+
+    SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
+    SDL_RenderFillRect(m_renderer, &rect);
+}
+
 void Window::drawText(const Vec2f& pos, const std::string& text, const Color& color, float scale)
 {
     SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
@@ -119,6 +130,17 @@ void Window::drawText(const Vec2f& pos, const std::string& text, const Color& co
 void Window::display()
 {
     SDL_RenderPresent(m_renderer);
+
+    // Any shake offset lasts a single frame.
+    SDL_SetRenderViewport(m_renderer, nullptr);
+}
+
+void Window::setViewOffset(const Vec2f& offset)
+{
+    const SDL_Rect viewport{static_cast<int>(offset.x), static_cast<int>(offset.y), m_width,
+                            m_height};
+
+    SDL_SetRenderViewport(m_renderer, &viewport);
 }
 
 void Window::setFrameAlpha(float alpha)
