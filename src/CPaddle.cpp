@@ -2,6 +2,7 @@
 
 #include "CGameContainer.hpp"
 #include "CResourceHolder.hpp"
+#include "engine/Gamepad.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -83,6 +84,8 @@ void CPaddle::update(const float dt)
         this->chasing_mouse = false;
     }
 
+    this->check_gamepad(dt);
+
     this->check_mouse(dt);
 
     this->animated_sprite.update(dt);
@@ -153,6 +156,35 @@ void CPaddle::set_spin(bool b)
 bool CPaddle::has_spin() const
 {
     return this->spin;
+}
+
+void CPaddle::check_gamepad(const float dt)
+{
+    const engine::Gamepad* pad = this->state->gc->gamepad;
+
+    if (pad == nullptr || !pad->isConnected())
+    {
+        return;
+    }
+
+    // The d-pad matches the keyboard; the stick is analog.
+    float direction = pad->getLeftStickX();
+
+    if (pad->isButtonDown(engine::Gamepad::Button::DpadRight))
+    {
+        direction = 1.f;
+    }
+    else if (pad->isButtonDown(engine::Gamepad::Button::DpadLeft))
+    {
+        direction = -1.f;
+    }
+
+    if (direction != 0.f)
+    {
+        this->move({this->velocity.x * direction * dt, 0.f});
+        this->dir = direction > 0 ? 1 : -1;
+        this->chasing_mouse = false;
+    }
 }
 
 void CPaddle::check_mouse(const float dt)

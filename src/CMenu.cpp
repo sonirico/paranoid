@@ -1,6 +1,7 @@
 #include "CMenu.hpp"
 
 #include "CGameContainer.hpp"
+#include "engine/Gamepad.hpp"
 #include "engine/Text.hpp"
 
 #include <SDL3/SDL.h>
@@ -16,8 +17,13 @@ int CMenu::update()
 {
     const bool* keys = SDL_GetKeyboardState(nullptr);
 
-    const bool up = keys[SDL_SCANCODE_UP];
-    const bool down = keys[SDL_SCANCODE_DOWN];
+    const engine::Gamepad* pad = this->gc->gamepad;
+    const bool pad_ok = pad != nullptr && pad->isConnected();
+
+    const bool up =
+        keys[SDL_SCANCODE_UP] || (pad_ok && pad->isButtonDown(engine::Gamepad::Button::DpadUp));
+    const bool down =
+        keys[SDL_SCANCODE_DOWN] || (pad_ok && pad->isButtonDown(engine::Gamepad::Button::DpadDown));
 
     if (up && !this->up_was_down)
     {
@@ -52,7 +58,8 @@ int CMenu::update()
 
     // Return rather than Space activates, so closing a pause menu does
     // not also release a sticky ball on the same key.
-    const bool enter = keys[SDL_SCANCODE_RETURN];
+    const bool enter =
+        keys[SDL_SCANCODE_RETURN] || (pad_ok && pad->isButtonDown(engine::Gamepad::Button::South));
 
     if (enter && !this->enter_was_down)
     {

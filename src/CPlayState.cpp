@@ -1,6 +1,7 @@
 #include "CPlayState.hpp"
 
 #include "CGameContainer.hpp"
+#include "engine/Gamepad.hpp"
 #include "engine/Text.hpp"
 #include "other_functions.hpp"
 
@@ -69,7 +70,12 @@ void CPlayState::events()
 
     const bool* keys = SDL_GetKeyboardState(nullptr);
 
-    const bool esc = keys[SDL_SCANCODE_ESCAPE];
+    const engine::Gamepad* pad = this->gc->gamepad;
+    const bool pad_ok = pad != nullptr && pad->isConnected();
+
+    // Start on the pad pauses like Escape.
+    const bool esc =
+        keys[SDL_SCANCODE_ESCAPE] || (pad_ok && pad->isButtonDown(engine::Gamepad::Button::Start));
 
     if (esc && !this->esc_was_down)
     {
@@ -82,9 +88,11 @@ void CPlayState::events()
         return;
     }
 
-    // Left click mirrors Space: release the sticky ball, fire the laser.
-    const bool fire =
-        keys[SDL_SCANCODE_SPACE] || (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK);
+    // Left click and the pad's south button mirror Space: release the
+    // sticky ball, fire the laser.
+    const bool fire = keys[SDL_SCANCODE_SPACE] ||
+                      (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK) ||
+                      (pad_ok && pad->isButtonDown(engine::Gamepad::Button::South));
 
     if (fire)
     {

@@ -4,6 +4,7 @@
 #include "assets.h"
 #include "engine/AudioDevice.hpp"
 #include "engine/Clock.hpp"
+#include "engine/Gamepad.hpp"
 #include "engine/Music.hpp"
 #include "engine/Sprite.hpp"
 #include "engine/Window.hpp"
@@ -49,7 +50,7 @@ int main(int argc, char** argv)
         SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "dummy");
     }
 
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMEPAD))
     {
         SDL_Log("SDL_Init failed: %s", SDL_GetError());
         return 1;
@@ -74,8 +75,10 @@ int main(int argc, char** argv)
         load_resources(rh);
 
         engine::Music music(audio);
+        engine::Gamepad gamepad;
 
         CGameContainer gc(&window, &audio, &rh, &music);
+        gc.gamepad = &gamepad;
 
         if (char* pref_path = SDL_GetPrefPath("", "paranoid"))
         {
@@ -106,6 +109,7 @@ int main(int argc, char** argv)
                 time_since_last_update -= game::TIME_PER_FRAME;
 
                 gc.events();
+                gamepad.update();
                 gsm.update(dt);
             }
 

@@ -41,6 +41,7 @@ add_library(paranoid_engine STATIC
     src/engine/AudioDevice.cpp
     src/engine/BitmapFont.cpp
     src/engine/Clock.cpp
+    src/engine/Gamepad.cpp
     src/engine/Music.cpp
     src/engine/Sound.cpp
     src/engine/SoundBuffer.cpp

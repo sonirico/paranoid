@@ -36,7 +36,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Animación de muerte de la pala (5 frames 32x16 de `base.png` y=224)
 - [x] Pala expandida con sus frames reales del sheet (48x8, y=160)
 - [x] Música: tema en el menú (`arkanoid.ogg`), stages alternan `stage.ogg`/`crystalhammer.ogg`, silencio en game over (jingle = `muerte.wav`)
-- [ ] Soporte de gamepad
+- [x] Soporte de gamepad: stick/d-pad mueven la pala, Sur = disparo/activar, Start = pausa; hot-plug
 - [x] Ajustes de volumen (música y fx) en Options, persistidos en `settings`
 - [x] Cheat de la tecla `A` solo en builds con `DEV_MODE` (`make dev`)
 - [ ] Editor de mapas: guardar/cargar niveles (`CMapState` solo imprime a stdout)

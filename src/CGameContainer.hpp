@@ -9,6 +9,7 @@
 namespace engine
 {
 class AudioDevice;
+class Gamepad;
 class Music;
 } // namespace engine
 
@@ -53,6 +54,9 @@ class CGameContainer
     // Writable per-user directory (trailing separator included) for
     // saves like the high score; empty disables persistence.
     std::string data_dir;
+
+    // The controller, when main wired one up (tests leave it null).
+    engine::Gamepad* gamepad = nullptr;
 
   private:
     // One dedicated voice per effect, indexed by its fx id.

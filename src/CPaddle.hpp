@@ -32,6 +32,8 @@ class CPaddle : public CEntity
   private:
     void check_bounds();
 
+    void check_gamepad(const float dt);
+
     void check_mouse(const float dt);
 
     void apply_width_factor(float factor);
