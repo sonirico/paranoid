@@ -2,6 +2,7 @@
 #include "CPlayState.hpp"
 #include "CResourceHolder.hpp"
 #include "engine/AudioDevice.hpp"
+#include "engine/Music.hpp"
 #include "engine/Window.hpp"
 
 #include <SDL3/SDL.h>
@@ -38,7 +39,10 @@ class PlayStateTest : public ::testing::Test
         holder->load(game::game_fx::STICKY, TEST_MEDIA_DIR "/fx/sticky.wav");
         holder->load(game::game_fx::SELECT, TEST_MEDIA_DIR "/fx/select.wav");
 
-        container = std::make_unique<CGameContainer>(window.get(), audio.get(), holder.get());
+        music = std::make_unique<engine::Music>(*audio);
+
+        container =
+            std::make_unique<CGameContainer>(window.get(), audio.get(), holder.get(), music.get());
 
         play_state = std::make_unique<CPlayState>(container.get());
         play_state->init();
@@ -50,6 +54,7 @@ class PlayStateTest : public ::testing::Test
     {
         play_state.reset();
         container.reset();
+        music.reset();
         holder.reset();
         audio.reset();
         window.reset();
@@ -107,6 +112,7 @@ class PlayStateTest : public ::testing::Test
 
     std::unique_ptr<engine::Window> window;
     std::unique_ptr<engine::AudioDevice> audio;
+    std::unique_ptr<engine::Music> music;
     std::unique_ptr<CResourceHolder> holder;
     std::unique_ptr<CGameContainer> container;
     std::unique_ptr<CPlayState> play_state;

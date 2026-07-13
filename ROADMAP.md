@@ -35,7 +35,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Juice: partículas de color al romper ladrillo, screen shake al perder vida y en game over
 - [x] Animación de muerte de la pala (5 frames 32x16 de `base.png` y=224)
 - [x] Pala expandida con sus frames reales del sheet (48x8, y=160)
-- [ ] Música por stage (`stage.ogg`, `crystalhammer.ogg` sin usar) + jingle de muerte
+- [x] Música: tema en el menú (`arkanoid.ogg`), stages alternan `stage.ogg`/`crystalhammer.ogg`, silencio en game over (jingle = `muerte.wav`)
 - [ ] Soporte de gamepad
 - [ ] Ajustes de volumen (música y fx)
 - [x] Cheat de la tecla `A` solo en builds con `DEV_MODE` (`make dev`)

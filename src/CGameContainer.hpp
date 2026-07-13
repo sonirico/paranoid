@@ -9,14 +9,16 @@
 namespace engine
 {
 class AudioDevice;
-}
+class Music;
+} // namespace engine
 
 // Shared services every state needs: the window, the loaded resources
 // and the sound-effect voices. Owns none of its dependencies.
 class CGameContainer
 {
   public:
-    CGameContainer(engine::Window* window, engine::AudioDevice* audio, CResourceHolder* rh);
+    CGameContainer(engine::Window* window, engine::AudioDevice* audio, CResourceHolder* rh,
+                   engine::Music* music);
 
     CGameContainer(const CGameContainer&) = delete;
     CGameContainer& operator=(const CGameContainer&) = delete;
@@ -25,6 +27,11 @@ class CGameContainer
     void events();
 
     void play_fx(game::game_fx::fx id);
+
+    // Switches the looping background track; asking for the track that
+    // is already playing is a no-op.
+    void play_music(const std::string& path);
+    void stop_music();
 
   public:
     engine::Window* window;
@@ -40,4 +47,7 @@ class CGameContainer
   private:
     // One dedicated voice per effect, indexed by its fx id.
     engine::Sound current_sound[game::game_fx::COUNT];
+
+    engine::Music* music;
+    std::string current_music;
 };

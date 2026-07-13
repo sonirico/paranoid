@@ -15,6 +15,8 @@ CMenuState::CMenuState(CGameContainer* gc)
 
 void CMenuState::init()
 {
+    this->gc->play_music("media/music/arkanoid.ogg");
+
     this->menu = std::make_unique<CMenu>(
         this->gc, std::vector<std::string>{"PLAY", "OPTIONS", "QUIT"}, game::WIDTH / 2.f, 300.f);
 

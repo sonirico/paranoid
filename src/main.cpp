@@ -73,7 +73,9 @@ int main(int argc, char** argv)
         CResourceHolder rh(window.getRenderer());
         load_resources(rh);
 
-        CGameContainer gc(&window, &audio, &rh);
+        engine::Music music(audio);
+
+        CGameContainer gc(&window, &audio, &rh, &music);
 
         if (char* pref_path = SDL_GetPrefPath("", "paranoid"))
         {
@@ -83,18 +85,6 @@ int main(int argc, char** argv)
 
         // Smoke runs skip the menu so the frames exercise real gameplay.
         CGameStateManager gsm(&gc, smoke ? game::game_states::PLAY : game::game_states::MENU);
-
-        engine::Music music(audio);
-
-        if (music.loadFromFile("media/music/arkanoid.ogg"))
-        {
-            music.setVolume(30);
-            music.play();
-        }
-        else
-        {
-            SDL_Log("Music failed to load, continuing without it");
-        }
 
         engine::Sprite background;
         background.setTexture(rh.get(game::game_textures::BACKGROUND));

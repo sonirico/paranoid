@@ -43,6 +43,14 @@ void CPlayState::init()
     this->spawn_ball();
 
     this->enter_intro(true);
+
+    this->play_stage_music();
+}
+
+void CPlayState::play_stage_music()
+{
+    this->gc->play_music(current_stage % 2 == 0 ? "media/music/stage.ogg"
+                                                : "media/music/crystalhammer.ogg");
 }
 
 void CPlayState::enter_intro(bool show_round)
@@ -527,8 +535,10 @@ void CPlayState::lose_life()
 
     if (this->lives == 0)
     {
-        // Game over: show the card, then update() returns to the menu.
+        // Game over: show the card in silence, then update() returns
+        // to the menu, whose theme takes over.
         this->save_high_score();
+        this->gc->stop_music();
 
         this->phase = Phase::GameOver;
         this->phase_time = GAME_OVER_DURATION;
@@ -961,6 +971,8 @@ void CPlayState::next_stage()
     this->spawn_ball();
 
     this->enter_intro(true);
+
+    this->play_stage_music();
 }
 
 void CPlayState::insert_bonus(CBrick* brick)

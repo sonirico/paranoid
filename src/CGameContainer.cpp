@@ -1,12 +1,13 @@
 #include "CGameContainer.hpp"
 
 #include "engine/AudioDevice.hpp"
+#include "engine/Music.hpp"
 
 #include <SDL3/SDL.h>
 
 CGameContainer::CGameContainer(engine::Window* window, engine::AudioDevice* audio,
-                               CResourceHolder* rh)
-    : window(window), rh(rh),
+                               CResourceHolder* rh, engine::Music* music)
+    : window(window), rh(rh), music(music),
       current_sound{engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
                     engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
                     engine::Sound(*audio), engine::Sound(*audio)}
@@ -36,6 +37,37 @@ void CGameContainer::events()
             this->window->setFullscreen(!this->window->isFullscreen());
         }
     }
+}
+
+void CGameContainer::play_music(const std::string& path)
+{
+    if (this->music == nullptr || this->current_music == path)
+    {
+        return;
+    }
+
+    if (this->music->loadFromFile(path))
+    {
+        this->current_music = path;
+
+        this->music->setVolume(30);
+        this->music->play();
+    }
+    else
+    {
+        SDL_Log("Music %s failed to load, continuing without it", path.c_str());
+    }
+}
+
+void CGameContainer::stop_music()
+{
+    if (this->music == nullptr)
+    {
+        return;
+    }
+
+    this->music->stop();
+    this->current_music.clear();
 }
 
 void CGameContainer::play_fx(game::game_fx::fx id)

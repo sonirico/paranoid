@@ -116,6 +116,9 @@ class CPlayState : public CState
     // place of the paddle while it runs.
     void start_paddle_death();
 
+    // Each stage alternates between the two gameplay tracks.
+    void play_stage_music();
+
     // Called when the last ball is lost; restarts the run at 0 lives.
     void lose_life();
     void spawn_ball();
