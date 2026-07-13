@@ -32,20 +32,20 @@ no input is faster than another.
 10% of destroyed bricks drop a capsule. Mode capsules (marked ⏱) last
 10 seconds and any new capsule cancels the one in effect.
 
-| Letter | Effect |
-|--------|--------|
-| B | **Break** — jump straight to the next stage |
-| C | **Catch** ⏱ — the paddle holds the ball; release with Space |
-| D | **Disruption** — the ball splits in three |
-| E | **Expand** ⏱ — wider paddle |
-| L | **Laser** ⏱ — the paddle fires with Space |
-| M | **Megaball** ⏱ — the ball smashes through bricks without bouncing |
-| N | **Net** ⏱ — a barrier on the floor bounces the ball back |
-| P | **Speed up** — faster balls |
-| R | **Reduce** ⏱ — narrower paddle |
-| S | **Slow** — slower balls |
-| T | **Twist** ⏱ — a moving paddle puts spin on the ball (Magnus curve) |
-| X | **Extra life** |
+| Capsule | Effect |
+|---------|--------|
+| ![B](docs/capsules/b.png) | **Break** — jump straight to the next stage |
+| ![C](docs/capsules/c.png) | **Catch** ⏱ — the paddle holds the ball; release with Space |
+| ![D](docs/capsules/d.png) | **Disruption** — the ball splits in three |
+| ![E](docs/capsules/e.png) | **Expand** ⏱ — wider paddle |
+| ![L](docs/capsules/l.png) | **Laser** ⏱ — the paddle fires with Space |
+| ![M](docs/capsules/m.png) | **Megaball** ⏱ — the ball smashes through bricks without bouncing |
+| ![N](docs/capsules/n.png) | **Net** ⏱ — a barrier on the floor bounces the ball back |
+| ![P](docs/capsules/p.png) | **Speed up** — faster balls |
+| ![R](docs/capsules/r.png) | **Reduce** ⏱ — narrower paddle |
+| ![S](docs/capsules/s.png) | **Slow** — slower balls |
+| ![T](docs/capsules/t.png) | **Twist** ⏱ — a moving paddle puts spin on the ball (Magnus curve) |
+| ![X](docs/capsules/x.png) | **Extra life** |
 
 ## Scoring
 
