@@ -9,7 +9,7 @@ CGameContainer::CGameContainer(engine::Window* window, engine::AudioDevice* audi
     : window(window), rh(rh),
       current_sound{engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
                     engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
-                    engine::Sound(*audio)}
+                    engine::Sound(*audio), engine::Sound(*audio)}
 {
     for (int i = 0; i < game::game_fx::COUNT; ++i)
     {
@@ -30,17 +30,7 @@ void CGameContainer::events()
             this->window->close();
             break;
         }
-
-        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE && !event.key.repeat)
-        {
-            this->paused = !this->paused;
-        }
     }
-}
-
-bool CGameContainer::is_paused() const
-{
-    return this->paused;
 }
 
 void CGameContainer::play_fx(game::game_fx::fx id)

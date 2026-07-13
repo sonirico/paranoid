@@ -10,7 +10,7 @@ class CGameContainer;
 class CGameStateManager
 {
   public:
-    explicit CGameStateManager(CGameContainer* gc);
+    CGameStateManager(CGameContainer* gc, int initial_state);
 
     void update(const float dt);
     void render();

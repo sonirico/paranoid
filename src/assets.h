@@ -145,6 +145,7 @@ enum fx
     POINTS,
     LIFEUP,
     STICKY,
+    SELECT,
     COUNT
 };
 };

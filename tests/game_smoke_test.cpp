@@ -38,6 +38,7 @@ class GameSmokeTest : public ::testing::Test
         holder->load(game::game_fx::POINTS, TEST_MEDIA_DIR "/fx/points.wav");
         holder->load(game::game_fx::LIFEUP, TEST_MEDIA_DIR "/fx/lifeup.wav");
         holder->load(game::game_fx::STICKY, TEST_MEDIA_DIR "/fx/sticky.wav");
+        holder->load(game::game_fx::SELECT, TEST_MEDIA_DIR "/fx/select.wav");
 
         container = std::make_unique<CGameContainer>(window.get(), audio.get(), holder.get());
     }
@@ -59,7 +60,7 @@ class GameSmokeTest : public ::testing::Test
 
 TEST_F(GameSmokeTest, RunsPlayStateForTwoSecondsWithoutCrashing)
 {
-    CGameStateManager manager(container.get());
+    CGameStateManager manager(container.get(), game::game_states::PLAY);
 
     const float dt = 1.f / game::FRAMES;
 
@@ -74,9 +75,26 @@ TEST_F(GameSmokeTest, RunsPlayStateForTwoSecondsWithoutCrashing)
     }
 }
 
+TEST_F(GameSmokeTest, RunsMenuStateForOneSecondWithoutCrashing)
+{
+    CGameStateManager manager(container.get(), game::game_states::MENU);
+
+    const float dt = 1.f / game::FRAMES;
+
+    for (unsigned int frame = 0; frame < game::FRAMES; ++frame)
+    {
+        container->events();
+        manager.update(dt);
+
+        window->clear();
+        manager.render();
+        window->display();
+    }
+}
+
 TEST_F(GameSmokeTest, BrickLosesLifeAndBecomesRemovable)
 {
-    CGameStateManager manager(container.get());
+    CGameStateManager manager(container.get(), game::game_states::PLAY);
 
     // Any CState works as the entity's context; build a brick through
     // the real wall-loading path instead of poking internals.
@@ -91,7 +109,7 @@ TEST_F(GameSmokeTest, BrickLosesLifeAndBecomesRemovable)
 
 TEST_F(GameSmokeTest, GoldBrickSurvivesTwoHits)
 {
-    CGameStateManager manager(container.get());
+    CGameStateManager manager(container.get(), game::game_states::PLAY);
     CBrick brick(manager.getCurrentState(), game::game_bricks::GOLD);
 
     brick.quit_life();

@@ -28,6 +28,10 @@ void CPlayState::init()
 
     this->paddle = std::make_unique<CPaddle>(this);
 
+    this->pause_menu =
+        std::make_unique<CMenu>(this->gc, std::vector<std::string>{"RESUME", "MAIN MENU", "QUIT"},
+                                game::WIDTH / 2.f, 280.f);
+
     this->load_bricks();
 
     this->spawn_ball();
@@ -36,6 +40,19 @@ void CPlayState::init()
 void CPlayState::events()
 {
     const bool* keys = SDL_GetKeyboardState(nullptr);
+
+    const bool esc = keys[SDL_SCANCODE_ESCAPE];
+
+    if (esc && !this->esc_was_down)
+    {
+        this->paused = !this->paused;
+    }
+    this->esc_was_down = esc;
+
+    if (this->paused)
+    {
+        return;
+    }
 
     // Left click mirrors Space: release the sticky ball, fire the laser.
     const bool fire =
@@ -69,6 +86,23 @@ void CPlayState::events()
 
 int CPlayState::update(const float dt)
 {
+    if (this->paused)
+    {
+        switch (this->pause_menu->update())
+        {
+        case 0:
+            this->paused = false;
+            break;
+        case 1:
+            return MENU;
+        case 2:
+            this->gc->window->close();
+            break;
+        }
+
+        return NULLSTATE;
+    }
+
     this->snapshot_entities();
 
     this->update_paddle(dt);
@@ -94,6 +128,26 @@ void CPlayState::render()
     this->render_lasers();
     this->render_lives();
     this->render_active_bonus();
+
+    if (this->paused)
+    {
+        this->render_pause_menu();
+    }
+}
+
+void CPlayState::render_pause_menu()
+{
+    engine::Text title;
+    title.setFont(this->gc->font);
+    title.setString("PAUSED");
+    title.setScale({4.f, 4.f});
+
+    const engine::FloatRect bounds = title.getGlobalBounds();
+    title.setPosition((game::WIDTH - bounds.width) / 2, 180.f);
+
+    this->gc->window->draw(title);
+
+    this->pause_menu->render();
 }
 
 void CPlayState::render_lives()

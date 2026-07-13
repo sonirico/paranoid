@@ -4,6 +4,7 @@
 #include "CBonus.hpp"
 #include "CBrick.hpp"
 #include "CLaser.hpp"
+#include "CMenu.hpp"
 #include "CPaddle.hpp"
 #include "CState.hpp"
 #include "assets.h"
@@ -77,6 +78,7 @@ class CPlayState : public CState
 
     void render_lives();
     void render_active_bonus();
+    void render_pause_menu();
 
     void update_lasers(const float dt);
     void render_lasers();
@@ -89,6 +91,11 @@ class CPlayState : public CState
     std::list<std::unique_ptr<CLaser>> lasers;
 
     bool fire_was_down = false;
+
+    // Escape pauses the run and opens Resume / Main menu / Quit over it.
+    bool paused = false;
+    bool esc_was_down = false;
+    std::unique_ptr<CMenu> pause_menu;
 
     static unsigned int current_stage;
     unsigned int total_bricks = 0;

@@ -23,7 +23,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 ## Nivel 2 — Estructura de juego
 
 - [x] Render de texto: bitmap font 8x8 (`engine::BitmapFont` + `engine::Text`, `media/textures/font.png`)
-- [ ] Estado de menú (Play / Options / Quit); Escape vuelve al menú
+- [x] Estado de menú (Play / Options / Quit, Options aún "coming soon"); Escape abre menú de pausa (Resume / Main menu / Quit) sin perder la partida
 - [ ] Fullscreen (F11) con modo letterbox (respeta aspecto) / stretch configurable
 - [ ] Score + HUD (puntos por ladrillo/bonus) y high score persistido
 - [ ] Transiciones: "Round N — Ready", pantalla de game over, stage clear

@@ -6,7 +6,6 @@
 #include "engine/Clock.hpp"
 #include "engine/Music.hpp"
 #include "engine/Sprite.hpp"
-#include "engine/Text.hpp"
 #include "engine/Window.hpp"
 
 #include <SDL3/SDL.h>
@@ -14,7 +13,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <random>
-#include <string>
 
 namespace
 {
@@ -35,6 +33,7 @@ void load_resources(CResourceHolder& rh)
     rh.load(POINTS, "media/fx/points.wav");
     rh.load(LIFEUP, "media/fx/lifeup.wav");
     rh.load(STICKY, "media/fx/sticky.wav");
+    rh.load(SELECT, "media/fx/select.wav");
 }
 } // namespace
 
@@ -75,7 +74,9 @@ int main(int argc, char** argv)
         load_resources(rh);
 
         CGameContainer gc(&window, &audio, &rh);
-        CGameStateManager gsm(&gc);
+
+        // Smoke runs skip the menu so the frames exercise real gameplay.
+        CGameStateManager gsm(&gc, smoke ? game::game_states::PLAY : game::game_states::MENU);
 
         engine::Music music(audio);
 
@@ -107,11 +108,7 @@ int main(int argc, char** argv)
                 time_since_last_update -= game::TIME_PER_FRAME;
 
                 gc.events();
-
-                if (!gc.is_paused())
-                {
-                    gsm.update(dt);
-                }
+                gsm.update(dt);
             }
 
             music.update();
@@ -124,20 +121,6 @@ int main(int argc, char** argv)
 
             window.draw(background);
             gsm.render();
-
-            if (gc.is_paused())
-            {
-                engine::Text label;
-                label.setFont(gc.font);
-                label.setString("PAUSED");
-                label.setScale({4.f, 4.f});
-
-                const engine::FloatRect bounds = label.getGlobalBounds();
-                label.setPosition((game::WIDTH - bounds.width) / 2,
-                                  (game::HEIGHT - bounds.height) / 2);
-
-                window.draw(label);
-            }
 
             window.display();
 

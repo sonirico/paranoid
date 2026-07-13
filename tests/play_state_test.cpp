@@ -36,6 +36,7 @@ class PlayStateTest : public ::testing::Test
         holder->load(game::game_fx::POINTS, TEST_MEDIA_DIR "/fx/points.wav");
         holder->load(game::game_fx::LIFEUP, TEST_MEDIA_DIR "/fx/lifeup.wav");
         holder->load(game::game_fx::STICKY, TEST_MEDIA_DIR "/fx/sticky.wav");
+        holder->load(game::game_fx::SELECT, TEST_MEDIA_DIR "/fx/select.wav");
 
         container = std::make_unique<CGameContainer>(window.get(), audio.get(), holder.get());
 

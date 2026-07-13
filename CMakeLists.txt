@@ -71,6 +71,8 @@ add_library(paranoid_game STATIC
     src/CGameStateManager.cpp
     src/CLaser.cpp
     src/CMapState.cpp
+    src/CMenu.cpp
+    src/CMenuState.cpp
     src/CPaddle.cpp
     src/CPlayState.cpp
     src/CResourceHolder.cpp
