@@ -16,6 +16,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 option(PARANOID_SANITIZE "Build with address and undefined-behavior sanitizers" OFF)
+option(PARANOID_DEV_MODE "Enable developer cheats (defines DEV_MODE)" OFF)
 
 find_package(SDL3 REQUIRED CONFIG)
 find_package(SDL3_image REQUIRED CONFIG)
@@ -27,6 +28,10 @@ target_compile_options(paranoid_options INTERFACE -Wall -Wextra -Wpedantic)
 if(PARANOID_SANITIZE)
     target_compile_options(paranoid_options INTERFACE -fsanitize=address,undefined -fno-omit-frame-pointer)
     target_link_options(paranoid_options INTERFACE -fsanitize=address,undefined)
+endif()
+
+if(PARANOID_DEV_MODE)
+    target_compile_definitions(paranoid_options INTERFACE DEV_MODE)
 endif()
 
 # Reusable engine layer: rendering, animation, audio and timing on top of SDL3.

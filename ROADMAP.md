@@ -38,5 +38,5 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [ ] Música por stage (`stage.ogg`, `crystalhammer.ogg` sin usar) + jingle de muerte
 - [ ] Soporte de gamepad
 - [ ] Ajustes de volumen (música y fx)
-- [x] Quitar el cheat de la tecla `A` (spawn de bola)
+- [x] Cheat de la tecla `A` solo en builds con `DEV_MODE` (`make dev`)
 - [ ] Editor de mapas: guardar/cargar niveles (`CMapState` solo imprime a stdout)

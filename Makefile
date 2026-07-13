@@ -25,6 +25,9 @@ release: ## Compile an optimized Release build
 
 debug: build ## Alias for the default Debug build
 
+dev: ## Build and launch with developer cheats (DEV_MODE)
+	$(MAKE) BUILD_DIR=build/dev CMAKE_FLAGS=-DPARANOID_DEV_MODE=ON run
+
 sanitize: ## Build and run tests under ASan/UBSan
 	$(MAKE) BUILD_DIR=build/asan CMAKE_FLAGS=-DPARANOID_SANITIZE=ON test
 
