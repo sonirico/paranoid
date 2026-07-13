@@ -15,10 +15,12 @@ struct Color
     static const Color Black;
     static const Color White;
     static const Color Yellow;
+    static const Color Red;
 };
 
 inline constexpr Color Color::Black{0, 0, 0, 255};
 inline constexpr Color Color::White{255, 255, 255, 255};
 inline constexpr Color Color::Yellow{255, 255, 0, 255};
+inline constexpr Color Color::Red{220, 40, 40, 255};
 
 } // namespace engine

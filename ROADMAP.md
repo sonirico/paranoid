@@ -26,7 +26,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Estado de menú (Play / Options / Quit, Options aún "coming soon"); Escape abre menú de pausa (Resume / Main menu / Quit) sin perder la partida
 - [x] Fullscreen (F11 o desde Options) con letterbox/stretch configurable en Options
 - [x] Score + HUD: 10 puntos por vida del ladrillo (solo al matarlo); high score persistido en `~/.local/share/paranoid/highscore`
-- [ ] Transiciones: "Round N — Ready", pantalla de game over, stage clear
+- [x] Transiciones: "ROUND N / READY" al empezar stage (solo "READY" al respawnear), "GAME OVER" 3 s y vuelta al menú
 
 ## Nivel 3 — Contenido y pulido
 

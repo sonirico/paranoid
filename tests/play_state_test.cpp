@@ -42,6 +42,8 @@ class PlayStateTest : public ::testing::Test
 
         play_state = std::make_unique<CPlayState>(container.get());
         play_state->init();
+
+        skipIntro();
     }
 
     void TearDown() override
@@ -54,6 +56,15 @@ class PlayStateTest : public ::testing::Test
         SDL_Quit();
     }
 
+    // Runs enough frozen frames to leave the ROUND/READY intro card.
+    void skipIntro()
+    {
+        for (unsigned int i = 0; i < game::FRAMES * 3; ++i)
+        {
+            play_state->update(game::TIME_PER_FRAME);
+        }
+    }
+
     // Drops every ball below the floor so the next update removes them.
     void loseAllBalls()
     {
@@ -63,9 +74,11 @@ class PlayStateTest : public ::testing::Test
             ball->setPosition(game::WIDTH / 2.f, game::HEIGHT + 50.f);
         }
 
-        // One update marks the balls removable, the next erases them.
+        // One update marks the balls removable, the next erases them
+        // and costs the life; the rest fast-forward the READY card.
         play_state->update(game::TIME_PER_FRAME);
         play_state->update(game::TIME_PER_FRAME);
+        skipIntro();
     }
 
     // Replaces the stage's wall with a single brick at the given position.
@@ -114,15 +127,24 @@ TEST_F(PlayStateTest, LosingLastBallCostsALifeAndRespawnsBall)
     EXPECT_TRUE(play_state->get_balls().front()->is_in_paddle());
 }
 
-TEST_F(PlayStateTest, GameOverRestartsWithFullLivesOnFirstStage)
+TEST_F(PlayStateTest, GameOverShowsItsCardThenReturnsToMenu)
 {
     loseAllBalls();
     loseAllBalls();
     loseAllBalls();
 
-    EXPECT_EQ(play_state->get_lives(), 3u);
-    EXPECT_EQ(CPlayState::get_current_stage(), 0u);
-    ASSERT_EQ(play_state->get_balls().size(), 1u);
+    EXPECT_EQ(play_state->get_lives(), 0u);
+
+    // The game-over card eventually hands control back to the menu;
+    // a fresh run then starts with full lives on the first stage.
+    int result = game::game_states::NULLSTATE;
+
+    for (unsigned int i = 0; i < game::FRAMES * 4 && result == game::game_states::NULLSTATE; ++i)
+    {
+        result = play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_EQ(result, game::game_states::MENU);
 }
 
 TEST_F(PlayStateTest, ExpandBonusWidensPaddle)
@@ -380,7 +402,7 @@ TEST_F(PlayStateTest, ChippedBricksOnlyScoreWhenKilled)
     EXPECT_EQ(play_state->get_score(), 20u);
 }
 
-TEST_F(PlayStateTest, GameOverResetsScoreButKeepsHighScore)
+TEST_F(PlayStateTest, GameOverKeepsTheHighScore)
 {
     placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
     launchBall({211.f, 80.f}, {0.f, 300.f});
@@ -392,13 +414,12 @@ TEST_F(PlayStateTest, GameOverResetsScoreButKeepsHighScore)
 
     ASSERT_EQ(play_state->get_score(), 10u);
 
-    // Burn the three lives: the run restarts but the best mark stays.
+    // Burn the three lives: the run ends but the best mark stays.
     for (int i = 0; i < 3; ++i)
     {
         loseAllBalls();
     }
 
-    EXPECT_EQ(play_state->get_score(), 0u);
     EXPECT_EQ(play_state->get_high_score(), 10u);
 }
 

@@ -41,10 +41,24 @@ void CPlayState::init()
     this->load_bricks();
 
     this->spawn_ball();
+
+    this->enter_intro(true);
+}
+
+void CPlayState::enter_intro(bool show_round)
+{
+    this->phase = Phase::Intro;
+    this->phase_time = show_round ? ROUND_INTRO_DURATION : READY_DURATION;
+    this->intro_shows_round = show_round;
 }
 
 void CPlayState::events()
 {
+    if (this->phase != Phase::Playing)
+    {
+        return;
+    }
+
     const bool* keys = SDL_GetKeyboardState(nullptr);
 
     const bool esc = keys[SDL_SCANCODE_ESCAPE];
@@ -92,6 +106,25 @@ void CPlayState::events()
 
 int CPlayState::update(const float dt)
 {
+    if (this->phase == Phase::Intro)
+    {
+        this->phase_time -= dt;
+
+        if (this->phase_time <= 0)
+        {
+            this->phase = Phase::Playing;
+        }
+
+        return NULLSTATE;
+    }
+
+    if (this->phase == Phase::GameOver)
+    {
+        this->phase_time -= dt;
+
+        return this->phase_time <= 0 ? MENU : NULLSTATE;
+    }
+
     if (this->paused)
     {
         switch (this->pause_menu->update())
@@ -136,9 +169,43 @@ void CPlayState::render()
     this->render_active_bonus();
     this->render_score();
 
+    this->render_phase_cards();
+
     if (this->paused)
     {
         this->render_pause_menu();
+    }
+}
+
+void CPlayState::render_phase_cards()
+{
+    // Centers the line horizontally at the given height.
+    const auto draw_centered =
+        [this](const std::string& string, float y, float scale, const engine::Color& color)
+    {
+        engine::Text text;
+        text.setFont(this->gc->font);
+        text.setString(string);
+        text.setScale({scale, scale});
+        text.setColor(color);
+        text.setPosition((game::WIDTH - text.getGlobalBounds().width) / 2, y);
+
+        this->gc->window->draw(text);
+    };
+
+    if (this->phase == Phase::Intro)
+    {
+        if (this->intro_shows_round)
+        {
+            draw_centered("ROUND " + std::to_string(current_stage + 1), 260.f, 3.f,
+                          engine::Color::White);
+        }
+
+        draw_centered("READY", 320.f, 3.f, engine::Color::Yellow);
+    }
+    else if (this->phase == Phase::GameOver)
+    {
+        draw_centered("GAME OVER", 280.f, 5.f, engine::Color::Red);
     }
 }
 
@@ -343,19 +410,18 @@ void CPlayState::lose_life()
 
     if (this->lives == 0)
     {
-        // Game over: restart the whole run.
-        current_stage = 0;
-        this->lives = STARTING_LIVES;
-
+        // Game over: show the card, then update() returns to the menu.
         this->save_high_score();
-        this->score = 0;
 
-        this->bonus.clear();
-        this->load_bricks();
-        this->paddle->reset();
+        this->phase = Phase::GameOver;
+        this->phase_time = GAME_OVER_DURATION;
+
+        return;
     }
 
     this->spawn_ball();
+
+    this->enter_intro(false);
 }
 
 void CPlayState::spawn_ball()
@@ -712,6 +778,8 @@ void CPlayState::next_stage()
     this->paddle->reset();
 
     this->spawn_ball();
+
+    this->enter_intro(true);
 }
 
 void CPlayState::insert_bonus(CBrick* brick)

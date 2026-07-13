@@ -68,6 +68,21 @@ class CPlayState : public CState
     void fire_lasers();
 
   private:
+    // The screen's coarse mode: a frozen intro card, live gameplay, or
+    // the game-over card before returning to the menu.
+    enum class Phase
+    {
+        Intro,
+        Playing,
+        GameOver
+    };
+
+    // Freezes the game behind the "ROUND N" + "READY" card; plain
+    // respawns show only "READY".
+    void enter_intro(bool show_round);
+
+    void render_phase_cards();
+
     // Records every moving entity's position so render can interpolate.
     void snapshot_entities();
 
@@ -112,6 +127,14 @@ class CPlayState : public CState
 
     unsigned int score = 0;
     unsigned int high_score = 0;
+
+    Phase phase = Phase::Intro;
+    float phase_time = 0;
+    bool intro_shows_round = true;
+
+    static constexpr float ROUND_INTRO_DURATION = 2.f;
+    static constexpr float READY_DURATION = 1.5f;
+    static constexpr float GAME_OVER_DURATION = 3.f;
 
     game::game_bonus::bonus active_bonus = game::game_bonus::COUNT;
     float bonus_time_left = 0;
