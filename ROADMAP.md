@@ -22,7 +22,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 
 ## Nivel 2 — Estructura de juego
 
-- [ ] Render de texto (bitmap font o SDL3_ttf) — prerequisito de menú, score y HUD
+- [x] Render de texto: bitmap font 8x8 (`engine::BitmapFont` + `engine::Text`, `media/textures/font.png`)
 - [ ] Estado de menú (Play / Options / Quit); Escape vuelve al menú
 - [ ] Fullscreen (F11) con modo letterbox (respeta aspecto) / stretch configurable
 - [ ] Score + HUD (puntos por ladrillo/bonus) y high score persistido

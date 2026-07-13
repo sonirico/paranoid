@@ -1,6 +1,7 @@
 #include "CPlayState.hpp"
 
 #include "CGameContainer.hpp"
+#include "engine/Text.hpp"
 #include "other_functions.hpp"
 
 #include <SDL3/SDL.h>
@@ -144,9 +145,15 @@ void CPlayState::render_active_bonus()
 
     // Capsule icon plus its name, bottom-right corner, mirroring the
     // lives row on the left.
-    const float GLYPH = 16.f; // 8px debug font at 2x.
+    engine::Text label;
+    label.setFont(this->gc->font);
+    label.setString(name);
+    label.setScale({2.f, 2.f});
+
     const float y = game::HEIGHT - 18.f;
-    const float x_text = game::WIDTH - 10.f - name.size() * GLYPH;
+    const float x_text = game::WIDTH - 10.f - label.getGlobalBounds().width;
+
+    label.setPosition(x_text, y);
 
     engine::Sprite icon;
     icon.setTexture(this->rh->get(game::game_textures::MAIN));
@@ -155,7 +162,7 @@ void CPlayState::render_active_bonus()
     icon.setPosition(x_text - 42.f, y);
 
     this->gc->window->draw(icon);
-    this->gc->window->drawText({x_text, y}, name, engine::Color::White, 2.f);
+    this->gc->window->draw(label);
 }
 
 void CPlayState::clear()

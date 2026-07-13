@@ -28,6 +28,7 @@ class PlayStateTest : public ::testing::Test
         holder->load(game::game_textures::BACKGROUND, TEST_MEDIA_DIR "/textures/background.png");
         holder->load(game::game_textures::MAIN, TEST_MEDIA_DIR "/textures/base.png");
         holder->load(game::game_textures::BRICKS, TEST_MEDIA_DIR "/textures/bricks.png");
+        holder->load(game::game_textures::FONT, TEST_MEDIA_DIR "/textures/font.png");
         holder->load(game::game_fx::REBOTE1, TEST_MEDIA_DIR "/fx/rebote1.wav");
         holder->load(game::game_fx::REBOTE2, TEST_MEDIA_DIR "/fx/rebote2.wav");
         holder->load(game::game_fx::MUERTE, TEST_MEDIA_DIR "/fx/muerte.wav");

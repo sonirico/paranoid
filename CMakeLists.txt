@@ -34,11 +34,13 @@ add_library(paranoid_engine STATIC
     src/engine/AnimatedSprite.cpp
     src/engine/Animation.cpp
     src/engine/AudioDevice.cpp
+    src/engine/BitmapFont.cpp
     src/engine/Clock.cpp
     src/engine/Music.cpp
     src/engine/Sound.cpp
     src/engine/SoundBuffer.cpp
     src/engine/Sprite.cpp
+    src/engine/Text.cpp
     src/engine/Texture.cpp
     src/engine/Transformable.cpp
     src/engine/Window.cpp

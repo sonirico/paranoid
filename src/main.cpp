@@ -6,6 +6,7 @@
 #include "engine/Clock.hpp"
 #include "engine/Music.hpp"
 #include "engine/Sprite.hpp"
+#include "engine/Text.hpp"
 #include "engine/Window.hpp"
 
 #include <SDL3/SDL.h>
@@ -25,6 +26,7 @@ void load_resources(CResourceHolder& rh)
     rh.load(BACKGROUND, "media/textures/background.png");
     rh.load(MAIN, "media/textures/base.png");
     rh.load(BRICKS, "media/textures/bricks.png");
+    rh.load(FONT, "media/textures/font.png");
 
     rh.load(REBOTE1, "media/fx/rebote1.wav");
     rh.load(REBOTE2, "media/fx/rebote2.wav");
@@ -125,12 +127,16 @@ int main(int argc, char** argv)
 
             if (gc.is_paused())
             {
-                const std::string label = "PAUSED";
-                const float scale = 4.f;
-                const float text_width = label.size() * 8.f * scale;
+                engine::Text label;
+                label.setFont(gc.font);
+                label.setString("PAUSED");
+                label.setScale({4.f, 4.f});
 
-                window.drawText({(game::WIDTH - text_width) / 2, (game::HEIGHT - 8.f * scale) / 2},
-                                label, engine::Color::White, scale);
+                const engine::FloatRect bounds = label.getGlobalBounds();
+                label.setPosition((game::WIDTH - bounds.width) / 2,
+                                  (game::HEIGHT - bounds.height) / 2);
+
+                window.draw(label);
             }
 
             window.display();

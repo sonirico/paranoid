@@ -2,6 +2,7 @@
 
 #include "CResourceHolder.hpp"
 #include "assets.h"
+#include "engine/BitmapFont.hpp"
 #include "engine/Sound.hpp"
 #include "engine/Window.hpp"
 
@@ -31,6 +32,9 @@ class CGameContainer
   public:
     engine::Window* window;
     CResourceHolder* rh;
+
+    // The game's bitmap font, shared by every state that renders text.
+    engine::BitmapFont font;
 
   private:
     // One dedicated voice per effect, indexed by its fx id.

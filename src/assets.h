@@ -31,7 +31,8 @@ enum textures
 {
     BACKGROUND,
     MAIN,
-    BRICKS
+    BRICKS,
+    FONT
 };
 };
 

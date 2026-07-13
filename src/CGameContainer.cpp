@@ -15,6 +15,8 @@ CGameContainer::CGameContainer(engine::Window* window, engine::AudioDevice* audi
     {
         this->current_sound[i].setBuffer(this->rh->get(static_cast<game::game_fx::fx>(i)));
     }
+
+    this->font.setTexture(this->rh->get(game::game_textures::FONT));
 }
 
 void CGameContainer::events()
