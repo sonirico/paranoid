@@ -20,8 +20,11 @@ class CGameContainer
     CGameContainer(const CGameContainer&) = delete;
     CGameContainer& operator=(const CGameContainer&) = delete;
 
-    // Drains the OS event queue; closes the window on quit or Escape.
+    // Drains the OS event queue; closes the window on quit and toggles
+    // the pause on Escape.
     void events();
+
+    bool is_paused() const;
 
     void play_fx(game::game_fx::fx id);
 
@@ -32,4 +35,6 @@ class CGameContainer
   private:
     // One dedicated voice per effect, indexed by its fx id.
     engine::Sound current_sound[game::game_fx::COUNT];
+
+    bool paused = false;
 };

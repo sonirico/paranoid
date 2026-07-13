@@ -18,7 +18,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Input de ratón para la pala (absoluto, click = Espacio) + teclado a 550 px/s
 - [x] Sonido al perder la bola (`media/fx/muerte.wav`)
 - [x] Sonido al coger cápsulas (X→`lifeup.wav`, C→`sticky.wav`, resto→`option.wav`; `points.wav` reservado para el score)
-- [ ] Pausa real: Escape no debe cerrar el juego en seco
+- [x] Pausa real: Escape alterna pausa con overlay "PAUSA"; el juego solo se cierra con la X de la ventana
 
 ## Nivel 2 — Estructura de juego
 

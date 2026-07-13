@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <random>
+#include <string>
 
 namespace
 {
@@ -104,7 +105,11 @@ int main(int argc, char** argv)
                 time_since_last_update -= game::TIME_PER_FRAME;
 
                 gc.events();
-                gsm.update(dt);
+
+                if (!gc.is_paused())
+                {
+                    gsm.update(dt);
+                }
             }
 
             music.update();
@@ -117,6 +122,16 @@ int main(int argc, char** argv)
 
             window.draw(background);
             gsm.render();
+
+            if (gc.is_paused())
+            {
+                const std::string label = "PAUSA";
+                const float scale = 4.f;
+                const float text_width = label.size() * 8.f * scale;
+
+                window.drawText({(game::WIDTH - text_width) / 2, (game::HEIGHT - 8.f * scale) / 2},
+                                label, engine::Color::White, scale);
+            }
 
             window.display();
 

@@ -23,13 +23,23 @@ void CGameContainer::events()
 
     while (SDL_PollEvent(&event))
     {
-        if (event.type == SDL_EVENT_QUIT ||
-            (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE))
+        if (event.type == SDL_EVENT_QUIT)
         {
             this->window->close();
             break;
         }
+
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE &&
+            !event.key.repeat)
+        {
+            this->paused = !this->paused;
+        }
     }
+}
+
+bool CGameContainer::is_paused() const
+{
+    return this->paused;
 }
 
 void CGameContainer::play_fx(game::game_fx::fx id)
