@@ -6,10 +6,23 @@ void CEntity::draw(engine::Window& target) const
 {
     engine::AnimatedSprite sprite = this->animated_sprite;
 
-    sprite.setPosition(this->getPosition());
+    engine::Vec2f pos = this->getPosition();
+
+    if (this->has_prev_position)
+    {
+        pos = this->prev_position + (pos - this->prev_position) * target.getFrameAlpha();
+    }
+
+    sprite.setPosition(pos);
     sprite.setScale(this->getScale());
 
     target.draw(sprite);
+}
+
+void CEntity::snapshot()
+{
+    this->prev_position = this->getPosition();
+    this->has_prev_position = true;
 }
 
 engine::FloatRect CEntity::get_bounds() const

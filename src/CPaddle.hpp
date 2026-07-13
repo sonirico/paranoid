@@ -23,6 +23,8 @@ class CPaddle : public CEntity
     bool is_sticky() const;
     void set_laser(bool b);
     bool has_laser() const;
+    void set_spin(bool b);
+    bool has_spin() const;
 
     // -1 left, 0 idle, 1 right; consumed by sticky-ball logic.
     int dir = 0;
@@ -33,10 +35,13 @@ class CPaddle : public CEntity
     void apply_width_factor(float factor);
 
     engine::Animation animation;
+    // Blue-tipped cannon frames shown while the laser mode is armed.
+    engine::Animation laser_animation;
 
     std::vector<engine::IntRect> rects;
 
     float width_factor = 1.f;
     bool sticky = false;
     bool laser = false;
+    bool spin = false;
 };

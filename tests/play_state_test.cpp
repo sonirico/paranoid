@@ -61,6 +61,30 @@ class PlayStateTest : public ::testing::Test
         play_state->update(game::TIME_PER_FRAME);
     }
 
+    // Replaces the stage's wall with a single brick at the given position.
+    CBrick* placeSingleBrick(const engine::Vec2f& pos, game::game_bricks::bricks type)
+    {
+        auto& bricks = play_state->get_bricks();
+        bricks.clear();
+
+        auto brick = std::make_unique<CBrick>(play_state.get(), type);
+        brick->setPosition(pos);
+        bricks.push_back(std::move(brick));
+
+        return bricks.back().get();
+    }
+
+    // Puts the first ball in flight at the given position and velocity.
+    CBall* launchBall(const engine::Vec2f& pos, const engine::Vec2f& vel)
+    {
+        CBall* ball = play_state->get_balls().front().get();
+        ball->set_in_paddle(false);
+        ball->setPosition(pos);
+        ball->set_velocity(vel);
+
+        return ball;
+    }
+
     std::unique_ptr<engine::Window> window;
     std::unique_ptr<engine::AudioDevice> audio;
     std::unique_ptr<CResourceHolder> holder;
@@ -130,13 +154,188 @@ TEST_F(PlayStateTest, PaddleModesAreMutuallyExclusive)
     EXPECT_FLOAT_EQ(play_state->get_paddle()->get_size().x, normal);
 }
 
-TEST_F(PlayStateTest, MultiballBonusDoublesBalls)
+TEST_F(PlayStateTest, SpinBonusArmsPaddleExclusively)
+{
+    play_state->apply_bonus(game::game_bonus::T);
+
+    EXPECT_TRUE(play_state->get_paddle()->has_spin());
+
+    play_state->apply_bonus(game::game_bonus::C);
+
+    EXPECT_FALSE(play_state->get_paddle()->has_spin());
+    EXPECT_TRUE(play_state->get_paddle()->is_sticky());
+}
+
+TEST_F(PlayStateTest, ModeBonusesTrackTheActiveBonus)
+{
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::COUNT);
+
+    play_state->apply_bonus(game::game_bonus::L);
+
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::L);
+}
+
+TEST_F(PlayStateTest, ActiveBonusExpiresAfterItsTimeout)
+{
+    play_state->apply_bonus(game::game_bonus::L);
+    ASSERT_TRUE(play_state->get_paddle()->has_laser());
+
+    const int ticks = static_cast<int>(CPlayState::BONUS_DURATION / game::TIME_PER_FRAME) + 1;
+
+    for (int i = 0; i < ticks; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_FALSE(play_state->get_paddle()->has_laser());
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::COUNT);
+}
+
+TEST_F(PlayStateTest, AnyCapsuleCancelsTheActiveBonus)
+{
+    play_state->apply_bonus(game::game_bonus::L);
+    ASSERT_TRUE(play_state->get_paddle()->has_laser());
+
+    play_state->apply_bonus(game::game_bonus::S);
+
+    EXPECT_FALSE(play_state->get_paddle()->has_laser());
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::COUNT);
+}
+
+TEST_F(PlayStateTest, StickyPaddleCatchesBallWhereItLanded)
+{
+    play_state->apply_bonus(game::game_bonus::C);
+
+    CBall* ball = play_state->get_balls().front().get();
+    CPaddle* paddle = play_state->get_paddle();
+
+    // Drop the ball onto the paddle, off-centre.
+    ball->set_in_paddle(false);
+    ball->setPosition(paddle->getPosition().x + 10.f, paddle->getPosition().y - 40.f);
+    ball->set_velocity({0.f, 300.f});
+
+    for (int i = 0; i < 60 && !ball->is_in_paddle(); ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_TRUE(ball->is_in_paddle());
+    EXPECT_NEAR(ball->getPosition().x - paddle->getPosition().x, 10.f, 1.f);
+}
+
+TEST_F(PlayStateTest, StickyPaddleStoresUpwardsReleaseVelocity)
+{
+    play_state->apply_bonus(game::game_bonus::C);
+
+    CBall* ball = play_state->get_balls().front().get();
+    CPaddle* paddle = play_state->get_paddle();
+
+    // Drop the ball onto the paddle from above.
+    ball->set_in_paddle(false);
+    ball->setPosition(paddle->getPosition().x + 10.f, paddle->getPosition().y - 40.f);
+    ball->set_velocity({0.f, 300.f});
+
+    for (int i = 0; i < 60 && !ball->is_in_paddle(); ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_TRUE(ball->is_in_paddle());
+    EXPECT_LT(ball->get_velocity().y, 0.f);
+}
+
+TEST_F(PlayStateTest, BallPastPaddleTopIsBeyondSaving)
+{
+    CBall* ball = play_state->get_balls().front().get();
+    CPaddle* paddle = play_state->get_paddle();
+
+    // Already below the paddle's top edge, overlapping it from the side.
+    ball->set_in_paddle(false);
+    ball->setPosition(paddle->getPosition().x + 10.f, paddle->getPosition().y + 4.f);
+    ball->set_velocity({50.f, 200.f});
+
+    play_state->update(game::TIME_PER_FRAME);
+
+    EXPECT_FALSE(ball->is_in_paddle());
+    EXPECT_GT(ball->get_velocity().x, 0.f);
+    EXPECT_GT(ball->get_velocity().y, 0.f);
+}
+
+TEST_F(PlayStateTest, BrickCornerGrazeReflectsOnlyTheStruckAxis)
+{
+    // The brick is 32x16 on screen; the ball, 10x8.
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+
+    // Falling from the upper left, the ball clips the brick's lower-left
+    // corner: it crosses the left face, so only X may mirror.
+    CBall* ball = launchBall({185.f, 106.f}, {400.f, 400.f});
+
+    play_state->update(game::TIME_PER_FRAME);
+
+    EXPECT_LT(ball->get_velocity().x, 0.f);
+    EXPECT_GT(ball->get_velocity().y, 0.f);
+}
+
+TEST_F(PlayStateTest, HeadOnBrickHitReflectsVertically)
+{
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+
+    // Straight down onto the middle of the brick's top face.
+    CBall* ball = launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_LT(ball->get_velocity().y, 0.f);
+    EXPECT_FLOAT_EQ(ball->get_velocity().x, 0.f);
+}
+
+TEST_F(PlayStateTest, FastBallNeverTunnelsThroughABrick)
+{
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+
+    // Fast enough to cross the whole brick within a single tick.
+    CBall* ball = launchBall({211.f, 80.f}, {0.f, 5000.f});
+
+    play_state->update(game::TIME_PER_FRAME);
+
+    EXPECT_LT(ball->get_velocity().y, 0.f);
+    EXPECT_TRUE(play_state->get_bricks().empty());
+}
+
+TEST_F(PlayStateTest, BrickHitConsumesExactlyOneLife)
+{
+    // Silver bricks take two hits: one bounce must leave it standing.
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::SILVER);
+
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_EQ(play_state->get_bricks().size(), 1u);
+}
+
+TEST_F(PlayStateTest, MultiballBonusSplitsBallInThree)
 {
     ASSERT_EQ(play_state->get_balls().size(), 1u);
 
     play_state->apply_bonus(game::game_bonus::D);
 
-    EXPECT_EQ(play_state->get_balls().size(), 2u);
+    ASSERT_EQ(play_state->get_balls().size(), 3u);
+
+    // The split releases the parked ball and every ball keeps its speed.
+    const float speed = play_state->get_balls().front()->get_velocity().length();
+
+    for (auto& ball : play_state->get_balls())
+    {
+        EXPECT_FALSE(ball->is_in_paddle());
+        EXPECT_NEAR(ball->get_velocity().length(), speed, 0.5f);
+    }
 }
 
 TEST_F(PlayStateTest, SlowBonusReducesBallSpeed)

@@ -5,6 +5,10 @@
 #include "assets.h"
 #include "engine/Animation.hpp"
 
+#include <list>
+#include <memory>
+#include <vector>
+
 class CPaddle; // Breaks the CBall <--> CPaddle circular dependency.
 
 class CBall : public CEntity
@@ -16,14 +20,16 @@ class CBall : public CEntity
     void update(const float dt) override;
     void reset() override;
 
-    // Parks the ball on top of the paddle (serve position).
+    // Parks the ball centered on top of the paddle (serve position).
     void set_in_paddle();
     void set_in_paddle(bool b);
 
     bool is_in_paddle() const;
     bool is_removable() const;
 
-    bool collision_ball_brick(CBrick* b, const float dt);
+    // Sweeps this tick's flight path against every brick, bouncing off
+    // each one it strikes in path order. Returns the bricks that were hit.
+    std::vector<CBrick*> collision_ball_bricks(const std::list<std::unique_ptr<CBrick>>& bricks);
 
     void set_velocity(const engine::Vec2f& v);
 
@@ -34,10 +40,32 @@ class CBall : public CEntity
   private:
     void collision_ball_paddle();
 
+    // Parks the ball at the given x offset from the paddle's left edge.
+    void park_in_paddle(float offset);
+
+    // Repositions a parked ball, keeping its offset as the paddle moves.
+    void follow_paddle();
+
+    // Curves the flight path sideways proportionally to the current spin.
+    void apply_magnus(const float dt);
+
     void check_bounds();
 
-    bool check_point_rect(engine::Vec2f point, CBrick* b) const;
-    bool check_collision(CBrick* b);
+    // How a tick's flight path strikes one brick, as found by
+    // sweep_ball_brick: when along the segment, which axes to mirror,
+    // and how far to push out a ball that started the tick overlapping.
+    struct SweptHit
+    {
+        float t = 0.f;
+        bool flip_x = false;
+        bool flip_y = false;
+        engine::Vec2f eject;
+    };
+
+    // Sweeps the ball's centre along the segment start + delta against one
+    // brick expanded by half the ball (Minkowski sum). True on impact.
+    bool sweep_ball_brick(const engine::Vec2f& start, const engine::Vec2f& delta, CBrick* b,
+                          SweptHit& hit) const;
 
     engine::Animation animation;
 
@@ -45,11 +73,42 @@ class CBall : public CEntity
 
     bool in_paddle = false;
 
+    // X distance from the paddle's left edge while parked.
+    float paddle_offset = 0;
+
     bool removable = false;
 
+    // Target speed (the velocity's magnitude): every bounce re-normalizes
+    // the velocity to this, so the ball never slows down by hitting at an
+    // angle. Ramps up on each paddle bounce until MAX_VEL.
     float vel = 400;
 
-    // Set by check_collision when the velocity flipped on that axis.
-    bool dirx = false;
-    bool diry = false;
+    static constexpr float VEL_RAMP = 1.025f;
+    static constexpr float MAX_VEL = 720.f;
+
+    // Spin imparted by a moving spin-mode paddle (bonus T); positive
+    // curves clockwise on screen.
+    float spin = 0;
+
+    static constexpr float SPIN_FROM_PADDLE = 0.02f; // Per unit of paddle speed.
+    static constexpr float MAX_SPIN = 16.f;          // Accumulation cap.
+    static constexpr float MAGNUS_COEF = 60.f;       // Spin to lateral acceleration.
+    static constexpr float SPIN_DECAY = 1.2f;        // Fraction lost per second.
+    static constexpr float SPIN_BOUNCE_DAMP = 0.6f;  // Kept after wall/brick hits.
+
+    // The Magnus curve may never push the flight path closer than ~20
+    // degrees to the horizontal: a near-parallel ball diving at the floor
+    // gives the player no time to react.
+    static constexpr float MIN_VERTICAL_RATIO = 0.342f; // sin(20 degrees)
+
+    // Where the ball started the current physics tick; a ball whose bottom
+    // was already past the paddle's top edge can no longer be saved.
+    engine::Vec2f tick_start_pos;
+
+    // A tick's flight path bounces off at most this many bricks.
+    static constexpr unsigned int MAX_BRICK_BOUNCES = 3;
+
+    // Separation left after each bounce so float rounding cannot
+    // re-detect the face the ball just left.
+    static constexpr float SWEEP_SKIN = 0.05f;
 };

@@ -5,7 +5,9 @@
 
 #include <SDL3/SDL.h>
 
+#include <cmath>
 #include <cstdlib>
+#include <string>
 
 using namespace game::game_states;
 using namespace game::game_bricks;
@@ -62,10 +64,13 @@ void CPlayState::events()
 
 int CPlayState::update(const float dt)
 {
+    this->snapshot_entities();
+
     this->update_paddle(dt);
     this->update_balls(dt);
     this->update_bonus(dt);
     this->update_lasers(dt);
+    this->update_active_bonus(dt);
 
     if (this->update_bricks(dt))
     {
@@ -83,6 +88,7 @@ void CPlayState::render()
     this->render_bonus();
     this->render_lasers();
     this->render_lives();
+    this->render_active_bonus();
 }
 
 void CPlayState::render_lives()
@@ -99,12 +105,79 @@ void CPlayState::render_lives()
     }
 }
 
+void CPlayState::render_active_bonus()
+{
+    using namespace game::game_bonus;
+
+    std::string name;
+
+    switch (this->active_bonus)
+    {
+    case E:
+        name = "EXPAND";
+        break;
+    case R:
+        name = "SHRINK";
+        break;
+    case C:
+        name = "STICKY";
+        break;
+    case L:
+        name = "LASER";
+        break;
+    case T:
+        name = "SPIN";
+        break;
+    default:
+        return;
+    }
+
+    // Countdown in whole seconds, space-padded so the right-aligned text
+    // doesn't shift when it drops below 10.
+    const int seconds = static_cast<int>(std::ceil(this->bonus_time_left));
+    name += seconds < 10 ? "  " : " ";
+    name += std::to_string(seconds);
+
+    // Capsule icon plus its name, bottom-right corner, mirroring the
+    // lives row on the left.
+    const float GLYPH = 16.f; // 8px debug font at 2x.
+    const float y = game::HEIGHT - 18.f;
+    const float x_text = game::WIDTH - 10.f - name.size() * GLYPH;
+
+    engine::Sprite icon;
+    icon.setTexture(this->rh->get(game::game_textures::MAIN));
+    icon.setTextureRect({176 + 16 * static_cast<int>(this->active_bonus), 0, 16, 8});
+    icon.setScale({2.f, 2.f});
+    icon.setPosition(x_text - 42.f, y);
+
+    this->gc->window->draw(icon);
+    this->gc->window->drawText({x_text, y}, name, engine::Color::White, 2.f);
+}
+
 void CPlayState::clear()
 {
     this->balls.clear();
     this->bonus.clear();
     this->bricks.clear();
     this->lasers.clear();
+}
+
+void CPlayState::snapshot_entities()
+{
+    this->paddle->snapshot();
+
+    for (auto& ball : this->balls)
+    {
+        ball->snapshot();
+    }
+    for (auto& b : this->bonus)
+    {
+        b->snapshot();
+    }
+    for (auto& laser : this->lasers)
+    {
+        laser->snapshot();
+    }
 }
 
 void CPlayState::update_balls(const float dt)
@@ -183,46 +256,79 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
 {
     using namespace game::game_bonus;
 
+    // Catching any capsule cancels whatever mode was in effect, like in
+    // the arcade original.
+    this->paddle->reset_modes();
+    this->active_bonus = game::game_bonus::COUNT;
+    this->bonus_time_left = 0;
+
     switch (type)
     {
     case E:
-        this->paddle->reset_modes();
         this->paddle->expand();
+        this->arm_active_bonus(type);
         break;
     case R:
-        this->paddle->reset_modes();
         this->paddle->shrink();
+        this->arm_active_bonus(type);
         break;
     case C:
-        this->paddle->reset_modes();
         this->paddle->set_sticky(true);
+        this->arm_active_bonus(type);
         break;
     case L:
-        this->paddle->reset_modes();
         this->paddle->set_laser(true);
+        this->arm_active_bonus(type);
+        break;
+    case T:
+        this->paddle->set_spin(true);
+        this->arm_active_bonus(type);
         break;
     case D:
     {
-        // Multiball: mirror every current ball, capped to keep it sane.
+        // Disruption: split one flying ball into three, Arkanoid style.
         const unsigned int MAX_BALLS = 8;
-        std::vector<CBall*> current;
+        const float SPLIT_ANGLE = 25.f * 3.14159265f / 180.f;
+
+        CBall* source = nullptr;
 
         for (auto& ball : this->balls)
         {
-            current.push_back(ball.get());
+            if (!ball->is_in_paddle())
+            {
+                source = ball.get();
+                break;
+            }
         }
 
-        for (CBall* ball : current)
+        // Every ball is parked on the paddle: serve the first and split it.
+        if (source == nullptr && !this->balls.empty())
+        {
+            source = this->balls.front().get();
+            source->set_in_paddle(false);
+        }
+
+        if (source == nullptr)
+        {
+            break;
+        }
+
+        const engine::Vec2f v = source->get_velocity();
+
+        for (const float angle : {-SPLIT_ANGLE, SPLIT_ANGLE})
         {
             if (this->balls.size() >= MAX_BALLS)
             {
                 break;
             }
 
+            const float c = std::cos(angle);
+            const float s = std::sin(angle);
+
             auto twin = std::make_unique<CBall>(this, this->paddle.get());
             twin->set_in_paddle(false);
-            twin->setPosition(ball->getPosition());
-            twin->set_velocity({-ball->get_velocity().x, ball->get_velocity().y});
+            twin->setPosition(source->getPosition());
+            twin->set_velocity({v.x * c - v.y * s, v.x * s + v.y * c});
 
             this->balls.push_back(std::move(twin));
         }
@@ -244,8 +350,30 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
         this->lives++;
         break;
     default:
-        // B/M/N/T are on the sprite sheet but have no effect yet.
+        // B/M/N are on the sprite sheet but have no effect yet.
         break;
+    }
+}
+
+void CPlayState::arm_active_bonus(game::game_bonus::bonus type)
+{
+    this->active_bonus = type;
+    this->bonus_time_left = BONUS_DURATION;
+}
+
+void CPlayState::update_active_bonus(const float dt)
+{
+    if (this->active_bonus == game::game_bonus::COUNT)
+    {
+        return;
+    }
+
+    this->bonus_time_left -= dt;
+
+    if (this->bonus_time_left <= 0)
+    {
+        this->paddle->reset_modes();
+        this->active_bonus = game::game_bonus::COUNT;
     }
 }
 
@@ -296,20 +424,25 @@ void CPlayState::update_lasers(const float dt)
 
 bool CPlayState::update_bricks(const float dt)
 {
+    for (auto& brick : this->bricks)
+    {
+        brick->update(dt);
+    }
+
+    // Each ball sweeps its whole tick's flight against the wall at once,
+    // so the nearest brick along the path is resolved first.
+    for (auto& ball : this->balls)
+    {
+        for (CBrick* brick : ball->collision_ball_bricks(this->bricks))
+        {
+            brick->quit_life();
+            brick->play_animation();
+        }
+    }
+
     for (auto it = this->bricks.begin(); it != this->bricks.end();)
     {
         CBrick* brick = it->get();
-        brick->update(dt);
-
-        for (auto& ball : this->balls)
-        {
-            if (ball->collision_ball_brick(brick, dt))
-            {
-                brick->quit_life();
-                brick->play_animation();
-                break;
-            }
-        }
 
         if (brick->is_removable())
         {
@@ -430,10 +563,10 @@ void CPlayState::next_stage()
 
 void CPlayState::insert_bonus(CBrick* brick)
 {
-    // 5% chance of dropping a bonus at all.
+    // 10% chance of dropping a bonus at all.
     unsigned int percent = (std::rand() % 1000) + 1;
 
-    if (percent > 50)
+    if (percent > 100)
     {
         return;
     }
@@ -447,7 +580,7 @@ void CPlayState::insert_bonus(CBrick* brick)
     { // Extra life
         type = game::game_bonus::X;
     }
-    else if (percent <= 12)
+    else if (percent <= 13)
     { // Laser
         type = game::game_bonus::L;
     }
@@ -455,25 +588,29 @@ void CPlayState::insert_bonus(CBrick* brick)
     { // Expand
         type = game::game_bonus::E;
     }
-    else if (percent <= 40)
+    else if (percent <= 37)
     { // Shrink
         type = game::game_bonus::R;
     }
-    else if (percent <= 55)
+    else if (percent <= 49)
     { // Sticky paddle
         type = game::game_bonus::C;
     }
-    else if (percent <= 70)
+    else if (percent <= 62)
     { // Multi-ball
         type = game::game_bonus::D;
     }
-    else if (percent <= 85)
+    else if (percent <= 75)
     { // Slow balls down
         type = game::game_bonus::S;
     }
-    else
+    else if (percent <= 88)
     { // Speed up
         type = game::game_bonus::P;
+    }
+    else
+    { // Spin paddle
+        type = game::game_bonus::T;
     }
 
     auto b = std::make_unique<CBonus>(this, type);
@@ -492,9 +629,19 @@ unsigned int CPlayState::get_lives() const
     return this->lives;
 }
 
+game::game_bonus::bonus CPlayState::get_active_bonus() const
+{
+    return this->active_bonus;
+}
+
 std::list<std::unique_ptr<CBall>>& CPlayState::get_balls()
 {
     return this->balls;
+}
+
+std::list<std::unique_ptr<CBrick>>& CPlayState::get_bricks()
+{
+    return this->bricks;
 }
 
 std::list<std::unique_ptr<CLaser>>& CPlayState::get_lasers()

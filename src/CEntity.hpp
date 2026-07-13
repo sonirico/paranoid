@@ -19,7 +19,12 @@ class CEntity : public engine::Transformable, public engine::Drawable
     virtual void reset() = 0;
 
     // Renders the animated sprite at the entity's position and scale.
+    // Entities that snapshot() every physics tick are drawn interpolated
+    // between the previous and current position (the window's frame alpha).
     void draw(engine::Window& target) const override;
+
+    // Records the current position as the previous physics tick's one.
+    void snapshot();
 
     engine::FloatRect get_bounds() const;
 
@@ -46,6 +51,10 @@ class CEntity : public engine::Transformable, public engine::Drawable
     engine::Vec2f scalation{2, 2};
 
     engine::Vec2f bounds;
+
+    // Position at the previous physics tick; valid once snapshot() ran.
+    engine::Vec2f prev_position;
+    bool has_prev_position = false;
 
     CState* state = nullptr;
 };

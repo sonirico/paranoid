@@ -52,6 +52,44 @@ TEST(Vec2, CompoundAssignmentAccumulates)
     EXPECT_FLOAT_EQ(v.y, 4.f);
 }
 
+TEST(Vec2, LengthIsEuclideanNorm)
+{
+    const engine::Vec2f v{3.f, 4.f};
+
+    EXPECT_FLOAT_EQ(v.length(), 5.f);
+}
+
+TEST(Vec2, NormalizedHasUnitLength)
+{
+    const engine::Vec2f v{3.f, 4.f};
+
+    const engine::Vec2f unit = v.normalized();
+
+    EXPECT_FLOAT_EQ(unit.x, 0.6f);
+    EXPECT_FLOAT_EQ(unit.y, 0.8f);
+    EXPECT_FLOAT_EQ(unit.length(), 1.f);
+}
+
+TEST(Vec2, NormalizedZeroVectorStaysZero)
+{
+    const engine::Vec2f v;
+
+    const engine::Vec2f unit = v.normalized();
+
+    EXPECT_FLOAT_EQ(unit.x, 0.f);
+    EXPECT_FLOAT_EQ(unit.y, 0.f);
+}
+
+TEST(Vec2, PerpendicularRotates90Degrees)
+{
+    const engine::Vec2f v{2.f, 3.f};
+
+    const engine::Vec2f perp = v.perpendicular();
+
+    EXPECT_FLOAT_EQ(perp.x, -3.f);
+    EXPECT_FLOAT_EQ(perp.y, 2.f);
+}
+
 TEST(Vec2, ComparesForEquality)
 {
     const engine::Vec2i a{1, 2};

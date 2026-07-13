@@ -104,6 +104,10 @@ int main(int argc, char** argv)
 
             music.update();
 
+            // How far into the next physics tick this render frame falls;
+            // entities interpolate their position with it.
+            window.setFrameAlpha(smoke ? 1.f : time_since_last_update / game::TIME_PER_FRAME);
+
             window.clear();
 
             window.draw(background);

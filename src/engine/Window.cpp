@@ -58,9 +58,30 @@ void Window::drawLine(const Vec2f& from, const Vec2f& to, const Color& color)
     SDL_RenderLine(m_renderer, from.x, from.y, to.x, to.y);
 }
 
+void Window::drawText(const Vec2f& pos, const std::string& text, const Color& color, float scale)
+{
+    SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
+
+    // The debug font has a fixed 8px glyph size; scale the whole renderer
+    // around the call to enlarge it.
+    SDL_SetRenderScale(m_renderer, scale, scale);
+    SDL_RenderDebugText(m_renderer, pos.x / scale, pos.y / scale, text.c_str());
+    SDL_SetRenderScale(m_renderer, 1.f, 1.f);
+}
+
 void Window::display()
 {
     SDL_RenderPresent(m_renderer);
+}
+
+void Window::setFrameAlpha(float alpha)
+{
+    m_frame_alpha = alpha;
+}
+
+float Window::getFrameAlpha() const
+{
+    return m_frame_alpha;
 }
 
 SDL_Renderer* Window::getRenderer() const
