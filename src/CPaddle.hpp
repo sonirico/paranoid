@@ -32,6 +32,8 @@ class CPaddle : public CEntity
   private:
     void check_bounds();
 
+    void check_mouse();
+
     void apply_width_factor(float factor);
 
     engine::Animation animation;
@@ -41,6 +43,9 @@ class CPaddle : public CEntity
     std::vector<engine::IntRect> rects;
 
     float width_factor = 1.f;
+    // Negative until the first reading; the paddle only follows the mouse
+    // while it moves, so keyboard and mouse can coexist.
+    float last_mouse_x = -1.f;
     bool sticky = false;
     bool laser = false;
     bool spin = false;

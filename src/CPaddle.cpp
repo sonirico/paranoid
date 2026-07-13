@@ -13,7 +13,7 @@ CPaddle::CPaddle(CState* st)
 
 void CPaddle::init()
 {
-    this->velocity.x = 400;
+    this->velocity.x = 550;
     this->velocity.y = 0;
 
     this->scale(this->scalation);
@@ -69,6 +69,8 @@ void CPaddle::update(const float dt)
         this->move(this->velocity * -dt);
         this->dir = -1;
     }
+
+    this->check_mouse();
 
     this->animated_sprite.update(dt);
     this->animated_sprite.play();
@@ -131,6 +133,29 @@ void CPaddle::set_spin(bool b)
 bool CPaddle::has_spin() const
 {
     return this->spin;
+}
+
+void CPaddle::check_mouse()
+{
+    float mouse_x = 0.f;
+    SDL_GetMouseState(&mouse_x, nullptr);
+
+    // First reading only records the position: the paddle must not jump to
+    // wherever the cursor happens to be at startup.
+    if (this->last_mouse_x < 0.f)
+    {
+        this->last_mouse_x = mouse_x;
+        return;
+    }
+
+    // The mouse takes over only while it moves; otherwise keyboard rules.
+    if (mouse_x != this->last_mouse_x)
+    {
+        this->dir = mouse_x > this->last_mouse_x ? 1 : -1;
+        this->last_mouse_x = mouse_x;
+
+        this->setPosition(mouse_x - this->bounds.x / 2, this->getPosition().y);
+    }
 }
 
 void CPaddle::apply_width_factor(float factor)

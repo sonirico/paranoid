@@ -36,7 +36,11 @@ void CPlayState::events()
 {
     const bool* keys = SDL_GetKeyboardState(nullptr);
 
-    if (keys[SDL_SCANCODE_SPACE])
+    // Left click mirrors Space: release the sticky ball, fire the laser.
+    const bool fire =
+        keys[SDL_SCANCODE_SPACE] || (SDL_GetMouseState(nullptr, nullptr) & SDL_BUTTON_LMASK);
+
+    if (fire)
     {
         // Release the first ball still parked on the paddle.
         for (auto& ball : this->balls)
@@ -48,13 +52,13 @@ void CPlayState::events()
             }
         }
 
-        // Laser mode fires once per key press.
-        if (!this->space_was_down && this->paddle->has_laser())
+        // Laser mode fires once per press.
+        if (!this->fire_was_down && this->paddle->has_laser())
         {
             this->fire_lasers();
         }
     }
-    this->space_was_down = keys[SDL_SCANCODE_SPACE];
+    this->fire_was_down = fire;
     if (keys[SDL_SCANCODE_A])
     {
         // Developer cheat: spawn an extra ball on the paddle.

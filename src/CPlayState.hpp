@@ -88,7 +88,7 @@ class CPlayState : public CState
     std::list<std::unique_ptr<CBonus>> bonus;
     std::list<std::unique_ptr<CLaser>> lasers;
 
-    bool space_was_down = false;
+    bool fire_was_down = false;
 
     static unsigned int current_stage;
     unsigned int total_bricks = 0;
