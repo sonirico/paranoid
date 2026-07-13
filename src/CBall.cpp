@@ -156,8 +156,19 @@ void CBall::check_bounds()
     }
     else if (pos.y + h > game::HEIGHT)
     {
-        // Fell below the paddle: the ball is lost.
-        this->removable = true;
+        if (this->net)
+        {
+            // The net barrier (bonus N) bounces the ball back up.
+            pos.y = game::HEIGHT - h;
+            this->velocity.y *= -1;
+            this->spin *= SPIN_BOUNCE_DAMP;
+            this->state->gc->play_fx(game::game_fx::REBOTE1);
+        }
+        else
+        {
+            // Fell below the paddle: the ball is lost.
+            this->removable = true;
+        }
     }
 
     this->setPosition(pos);
@@ -276,8 +287,25 @@ std::vector<CBrick*> CBall::collision_ball_bricks(const std::list<std::unique_pt
         {
             SweptHit hit;
 
-            if (this->sweep_ball_rect(start, delta, brick->getPosition(), brick->get_size(), hit) &&
-                (nearest == nullptr || hit.t < best.t))
+            if (!this->sweep_ball_rect(start, delta, brick->getPosition(), brick->get_size(), hit))
+            {
+                continue;
+            }
+
+            // A megaball ploughs straight through destructible bricks:
+            // they take the hit, but only indestructible ones deflect.
+            if (this->pierce && brick->type != game::game_bricks::UNDESTROYABLE)
+            {
+                if (std::find(hit_bricks.begin(), hit_bricks.end(), brick.get()) ==
+                    hit_bricks.end())
+                {
+                    hit_bricks.push_back(brick.get());
+                }
+
+                continue;
+            }
+
+            if (nearest == nullptr || hit.t < best.t)
             {
                 best = hit;
                 nearest = brick.get();
@@ -421,6 +449,16 @@ bool CBall::sweep_ball_rect(const engine::Vec2f& start, const engine::Vec2f& del
 bool CBall::is_removable() const
 {
     return this->removable;
+}
+
+void CBall::set_pierce(bool b)
+{
+    this->pierce = b;
+}
+
+void CBall::set_net(bool b)
+{
+    this->net = b;
 }
 
 void CBall::set_velocity(const engine::Vec2f& v)

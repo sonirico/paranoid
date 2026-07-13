@@ -147,6 +147,15 @@ int CPlayState::update(const float dt)
     this->update_paddle(dt);
     this->update_balls(dt);
     this->update_bonus(dt);
+
+    if (this->break_pending)
+    {
+        this->break_pending = false;
+        this->next_stage();
+
+        return NULLSTATE;
+    }
+
     this->update_lasers(dt);
     this->update_active_bonus(dt);
 
@@ -168,6 +177,19 @@ void CPlayState::render()
     this->render_lives();
     this->render_active_bonus();
     this->render_score();
+
+    // The net barrier (bonus N) shows as a bright band on the floor.
+    if (this->active_bonus == game::game_bonus::N)
+    {
+        const engine::Color cyan{0, 255, 255, 255};
+
+        for (int i = 1; i <= 3; ++i)
+        {
+            this->gc->window->drawLine(
+                {0.f, game::HEIGHT - static_cast<float>(i)},
+                {static_cast<float>(game::WIDTH), game::HEIGHT - static_cast<float>(i)}, cyan);
+        }
+    }
 
     this->render_phase_cards();
 
@@ -319,6 +341,12 @@ void CPlayState::render_active_bonus()
     case T:
         name = "SPIN";
         break;
+    case M:
+        name = "MEGA";
+        break;
+    case N:
+        name = "NET";
+        break;
     default:
         return;
     }
@@ -428,6 +456,11 @@ void CPlayState::spawn_ball()
 {
     auto b = std::make_unique<CBall>(this, this->paddle.get());
     b->set_in_paddle();
+
+    // New balls join whatever ball mode is in effect.
+    b->set_pierce(this->active_bonus == game::game_bonus::M);
+    b->set_net(this->active_bonus == game::game_bonus::N);
+
     this->balls.push_back(std::move(b));
 }
 
@@ -461,9 +494,7 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
 
     // Catching any capsule cancels whatever mode was in effect, like in
     // the arcade original.
-    this->paddle->reset_modes();
-    this->active_bonus = game::game_bonus::COUNT;
-    this->bonus_time_left = 0;
+    this->cancel_active_bonus();
 
     game::game_fx::fx pickup_sound = game::game_fx::OPTION;
 
@@ -565,8 +596,25 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
     case X:
         this->lives++;
         break;
+    case B:
+        // Break: jump to the next stage as soon as this pass ends.
+        this->break_pending = true;
+        break;
+    case M:
+        for (auto& ball : this->balls)
+        {
+            ball->set_pierce(true);
+        }
+        this->arm_active_bonus(type);
+        break;
+    case N:
+        for (auto& ball : this->balls)
+        {
+            ball->set_net(true);
+        }
+        this->arm_active_bonus(type);
+        break;
     default:
-        // B/M/N are on the sprite sheet but have no effect yet.
         break;
     }
 }
@@ -588,9 +636,22 @@ void CPlayState::update_active_bonus(const float dt)
 
     if (this->bonus_time_left <= 0)
     {
-        this->paddle->reset_modes();
-        this->active_bonus = game::game_bonus::COUNT;
+        this->cancel_active_bonus();
     }
+}
+
+void CPlayState::cancel_active_bonus()
+{
+    this->paddle->reset_modes();
+
+    for (auto& ball : this->balls)
+    {
+        ball->set_pierce(false);
+        ball->set_net(false);
+    }
+
+    this->active_bonus = game::game_bonus::COUNT;
+    this->bonus_time_left = 0;
 }
 
 void CPlayState::fire_lasers()
@@ -797,11 +858,15 @@ void CPlayState::insert_bonus(CBrick* brick)
 
     game::game_bonus::bonus type;
 
-    if (percent <= 5)
+    if (percent <= 4)
     { // Extra life
         type = game::game_bonus::X;
     }
-    else if (percent <= 13)
+    else if (percent <= 8)
+    { // Break: skip to the next stage
+        type = game::game_bonus::B;
+    }
+    else if (percent <= 15)
     { // Laser
         type = game::game_bonus::L;
     }
@@ -809,25 +874,33 @@ void CPlayState::insert_bonus(CBrick* brick)
     { // Expand
         type = game::game_bonus::E;
     }
-    else if (percent <= 37)
+    else if (percent <= 35)
     { // Shrink
         type = game::game_bonus::R;
     }
-    else if (percent <= 49)
+    else if (percent <= 45)
     { // Sticky paddle
         type = game::game_bonus::C;
     }
-    else if (percent <= 62)
+    else if (percent <= 55)
     { // Multi-ball
         type = game::game_bonus::D;
     }
-    else if (percent <= 75)
+    else if (percent <= 65)
     { // Slow balls down
         type = game::game_bonus::S;
     }
-    else if (percent <= 88)
+    else if (percent <= 75)
     { // Speed up
         type = game::game_bonus::P;
+    }
+    else if (percent <= 83)
+    { // Megaball
+        type = game::game_bonus::M;
+    }
+    else if (percent <= 91)
+    { // Net barrier
+        type = game::game_bonus::N;
     }
     else
     { // Spin paddle

@@ -31,7 +31,7 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 ## Nivel 3 — Contenido y pulido
 
 - [x] Diseñar stages 5–10: Invader, Checkerboard, Fortress, Chevrons, Cage, END
-- [ ] Efectos de las cápsulas B/M/N (B = break/saltar nivel, etc.)
+- [x] Efectos de las cápsulas B/M/N: B = break (salta de stage), M = megaball (atraviesa ladrillos 10 s), N = net (barrera en el suelo 10 s)
 - [ ] Juice: partículas al romper ladrillo, flash/shake
 - [ ] Animación de muerte de la pala (frames de explosión en `base.png` y=224–232)
 - [ ] Pala expandida con sus frames reales del sheet (hoy se estira por escala; hay sprites anchos en y=176–184)

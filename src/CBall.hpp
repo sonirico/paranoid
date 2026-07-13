@@ -33,6 +33,13 @@ class CBall : public CEntity
 
     void set_velocity(const engine::Vec2f& v);
 
+    // Megaball (bonus M): the ball smashes through destructible bricks
+    // without bouncing; only indestructible ones still deflect it.
+    void set_pierce(bool b);
+
+    // Net (bonus N): a barrier on the floor bounces the ball back up.
+    void set_net(bool b);
+
     // Multiplies the current speed and the base speed used after
     // paddle bounces, so slow/fast bonuses persist.
     void scale_velocity(float factor);
@@ -78,6 +85,9 @@ class CBall : public CEntity
     float paddle_offset = 0;
 
     bool removable = false;
+
+    bool pierce = false;
+    bool net = false;
 
     // Target speed (the velocity's magnitude): every bounce re-normalizes
     // the velocity to this, so the ball never slows down by hitting at an

@@ -361,6 +361,49 @@ TEST_F(PlayStateTest, FastBallNeverTunnelsThroughABrick)
     EXPECT_TRUE(play_state->get_bricks().empty());
 }
 
+TEST_F(PlayStateTest, BreakBonusJumpsToTheNextStage)
+{
+    ASSERT_EQ(CPlayState::get_current_stage(), 0u);
+
+    play_state->apply_bonus(game::game_bonus::B);
+    play_state->update(game::TIME_PER_FRAME);
+
+    EXPECT_EQ(CPlayState::get_current_stage(), 1u);
+}
+
+TEST_F(PlayStateTest, MegaballPiercesThroughBricksWithoutBouncing)
+{
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+
+    play_state->apply_bonus(game::game_bonus::M);
+    CBall* ball = launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 10; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_TRUE(play_state->get_bricks().empty());
+    EXPECT_GT(ball->get_velocity().y, 0.f);
+}
+
+TEST_F(PlayStateTest, NetBonusBouncesTheBallOffTheFloor)
+{
+    play_state->apply_bonus(game::game_bonus::N);
+
+    CBall* ball = launchBall({400.f, game::HEIGHT - 40.f}, {0.f, 300.f});
+    const unsigned int lives = play_state->get_lives();
+
+    for (int i = 0; i < 15; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_LT(ball->get_velocity().y, 0.f);
+    EXPECT_EQ(play_state->get_lives(), lives);
+    EXPECT_FALSE(ball->is_removable());
+}
+
 TEST_F(PlayStateTest, DestroyingABrickScoresTenPerLife)
 {
     placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);

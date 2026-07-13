@@ -89,6 +89,9 @@ class CPlayState : public CState
     // Puts a mode capsule in effect and starts its countdown.
     void arm_active_bonus(game::game_bonus::bonus type);
 
+    // Drops every mode: paddle modes and per-ball megaball/net flags.
+    void cancel_active_bonus();
+
     // Called when the last ball is lost; restarts the run at 0 lives.
     void lose_life();
     void spawn_ball();
@@ -138,4 +141,8 @@ class CPlayState : public CState
 
     game::game_bonus::bonus active_bonus = game::game_bonus::COUNT;
     float bonus_time_left = 0;
+
+    // A break capsule (B) was caught: jump stages once the bonus pass
+    // finishes, so the capsule list is not cleared mid-iteration.
+    bool break_pending = false;
 };
