@@ -42,6 +42,14 @@ void CPaddle::init()
         this->laser_animation.addFrame({128, 192 + 8 * i, 32, 8});
     }
 
+    this->wide_animation.setSpriteSheet(this->state->rh->get(game::game_textures::MAIN));
+
+    // Same 4-forward, 2-back shine cycle as the normal paddle.
+    for (const int x : {128, 176, 224, 272, 224, 176})
+    {
+        this->wide_animation.addFrame({x, 160, 48, 8});
+    }
+
     this->current_animation = &this->animation;
 
     this->animated_sprite = engine::AnimatedSprite(0.2f, true, false);
@@ -90,6 +98,9 @@ void CPaddle::reset()
 
 void CPaddle::reset_modes()
 {
+    this->current_animation = &this->animation;
+    this->animated_sprite.play(*this->current_animation);
+
     this->apply_width_factor(1.f);
     this->set_sticky(false);
     this->set_laser(false);
@@ -98,7 +109,11 @@ void CPaddle::reset_modes()
 
 void CPaddle::expand()
 {
-    this->apply_width_factor(1.5f);
+    // Real wide frames from the sheet instead of stretching the sprite.
+    this->current_animation = &this->wide_animation;
+    this->animated_sprite.play(*this->current_animation);
+
+    this->apply_width_factor(1.f);
 }
 
 void CPaddle::shrink()

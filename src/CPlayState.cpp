@@ -109,11 +109,15 @@ void CPlayState::events()
 
 int CPlayState::update(const float dt)
 {
-    // The shake decays in any phase: it may start on the very tick a
-    // card (READY, GAME OVER) freezes the game.
+    // The shake and the paddle explosion decay in any phase: they
+    // start on the very tick a card (READY, GAME OVER) freezes the game.
     if (this->shake_time > 0)
     {
         this->shake_time -= dt;
+    }
+    if (this->paddle_death_time > 0)
+    {
+        this->paddle_death_time -= dt;
     }
 
     if (this->phase == Phase::Intro)
@@ -519,6 +523,8 @@ void CPlayState::lose_life()
 
     this->gc->play_fx(game::game_fx::MUERTE);
 
+    this->start_paddle_death();
+
     if (this->lives == 0)
     {
         // Game over: show the card, then update() returns to the menu.
@@ -864,7 +870,33 @@ void CPlayState::render_bonus()
 
 void CPlayState::render_paddle()
 {
+    if (this->paddle_death_time > 0)
+    {
+        // The explosion frames are 32x16: twice the paddle's height,
+        // bottom-aligned over where it stood.
+        const unsigned int frame =
+            std::min(PADDLE_DEATH_FRAMES - 1,
+                     static_cast<unsigned int>((PADDLE_DEATH_DURATION - this->paddle_death_time) /
+                                               PADDLE_DEATH_DURATION * PADDLE_DEATH_FRAMES));
+
+        engine::Sprite explosion;
+        explosion.setTexture(this->rh->get(game::game_textures::MAIN));
+        explosion.setTextureRect({128 + 32 * static_cast<int>(frame), 224, 32, 16});
+        explosion.setScale({2.f, 2.f});
+        explosion.setPosition(this->paddle_death_pos.x, this->paddle_death_pos.y - 16.f);
+
+        this->gc->window->draw(explosion);
+
+        return;
+    }
+
     this->gc->window->draw(*(this->paddle));
+}
+
+void CPlayState::start_paddle_death()
+{
+    this->paddle_death_time = PADDLE_DEATH_DURATION;
+    this->paddle_death_pos = this->paddle->getPosition();
 }
 
 void CPlayState::render_lasers()

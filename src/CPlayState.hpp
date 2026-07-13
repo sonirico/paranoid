@@ -112,6 +112,10 @@ class CPlayState : public CState
     // Kicks the screen sideways for a moment (life loss, game over).
     void start_shake(float duration, float strength);
 
+    // Blows the paddle up where it stands (life loss); rendered in
+    // place of the paddle while it runs.
+    void start_paddle_death();
+
     // Called when the last ball is lost; restarts the run at 0 lives.
     void lose_life();
     void spawn_ball();
@@ -171,6 +175,13 @@ class CPlayState : public CState
     float shake_time = 0;
     float shake_strength = 0;
 
+    // Explosion frames left to show where the paddle just died.
+    float paddle_death_time = 0;
+    engine::Vec2f paddle_death_pos;
+
     static constexpr float PARTICLE_GRAVITY = 400.f;
     static constexpr unsigned int PARTICLES_PER_BRICK = 10;
+
+    static constexpr float PADDLE_DEATH_DURATION = 0.6f;
+    static constexpr unsigned int PADDLE_DEATH_FRAMES = 5;
 };

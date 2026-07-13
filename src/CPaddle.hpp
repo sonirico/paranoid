@@ -39,6 +39,8 @@ class CPaddle : public CEntity
     engine::Animation animation;
     // Blue-tipped cannon frames shown while the laser mode is armed.
     engine::Animation laser_animation;
+    // Real 48px-wide frames shown while expanded, instead of stretching.
+    engine::Animation wide_animation;
 
     std::vector<engine::IntRect> rects;
 

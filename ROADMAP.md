@@ -33,8 +33,8 @@ por prioridad; dentro de cada nivel el orden es orientativo.
 - [x] Diseñar stages 5–10: Invader, Checkerboard, Fortress, Chevrons, Cage, END
 - [x] Efectos de las cápsulas B/M/N: B = break (salta de stage), M = megaball (atraviesa ladrillos 10 s), N = net (barrera en el suelo 10 s)
 - [x] Juice: partículas de color al romper ladrillo, screen shake al perder vida y en game over
-- [ ] Animación de muerte de la pala (frames de explosión en `base.png` y=224–232)
-- [ ] Pala expandida con sus frames reales del sheet (hoy se estira por escala; hay sprites anchos en y=176–184)
+- [x] Animación de muerte de la pala (5 frames 32x16 de `base.png` y=224)
+- [x] Pala expandida con sus frames reales del sheet (48x8, y=160)
 - [ ] Música por stage (`stage.ogg`, `crystalhammer.ogg` sin usar) + jingle de muerte
 - [ ] Soporte de gamepad
 - [ ] Ajustes de volumen (música y fx)
