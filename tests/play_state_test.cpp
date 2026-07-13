@@ -254,7 +254,8 @@ TEST_F(PlayStateTest, BallPastPaddleTopIsBeyondSaving)
     CBall* ball = play_state->get_balls().front().get();
     CPaddle* paddle = play_state->get_paddle();
 
-    // Already below the paddle's top edge, overlapping it from the side.
+    // Already deeper than the save grace, overlapping the paddle from
+    // the side: it must fall through with no side bounce.
     ball->set_in_paddle(false);
     ball->setPosition(paddle->getPosition().x + 10.f, paddle->getPosition().y + 4.f);
     ball->set_velocity({50.f, 200.f});
@@ -264,6 +265,32 @@ TEST_F(PlayStateTest, BallPastPaddleTopIsBeyondSaving)
     EXPECT_FALSE(ball->is_in_paddle());
     EXPECT_GT(ball->get_velocity().x, 0.f);
     EXPECT_GT(ball->get_velocity().y, 0.f);
+}
+
+TEST_F(PlayStateTest, FastBallNeverTunnelsThroughThePaddle)
+{
+    const engine::Vec2f p_pos = play_state->get_paddle()->getPosition();
+
+    // Fast enough to cross the whole paddle within a single tick.
+    CBall* ball = launchBall({p_pos.x + 20.f, p_pos.y - 40.f}, {0.f, 5000.f});
+
+    play_state->update(game::TIME_PER_FRAME);
+
+    EXPECT_LT(ball->get_velocity().y, 0.f);
+}
+
+TEST_F(PlayStateTest, LateSaveWithinTheGraceStillBounces)
+{
+    const engine::Vec2f p_pos = play_state->get_paddle()->getPosition();
+
+    // The ball's bottom already dipped 4 px past the paddle's top edge —
+    // within the save grace, as when the paddle slides under a low ball
+    // at the last instant.
+    CBall* ball = launchBall({p_pos.x + 10.f, p_pos.y - 4.f}, {0.f, 200.f});
+
+    play_state->update(game::TIME_PER_FRAME);
+
+    EXPECT_LT(ball->get_velocity().y, 0.f);
 }
 
 TEST_F(PlayStateTest, BrickCornerGrazeReflectsOnlyTheStruckAxis)

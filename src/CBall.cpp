@@ -175,30 +175,26 @@ void CBall::collision_ball_paddle()
         return;
     }
 
-    float x1, w1, h1, y1, x2, y2, w2, h2;
+    const engine::Vec2f p_pos = this->paddle->getPosition();
+    const engine::Vec2f p_size = this->paddle->get_size();
 
-    x1 = this->getPosition().x;
-    y1 = this->getPosition().y;
-    w1 = this->bounds.x;
-    h1 = this->bounds.y;
+    // A ball whose bottom had already sunk deeper than the save grace at
+    // the start of the tick is beyond saving: no side bounces, but a
+    // paddle sliding under a low ball at the last instant still saves it.
+    if (this->tick_start_pos.y + this->bounds.y > p_pos.y + p_size.y * SAVE_GRACE)
+    {
+        return;
+    }
 
-    x2 = this->paddle->getPosition().x;
-    y2 = this->paddle->getPosition().y;
-    w2 = this->paddle->get_size().x;
-    h2 = this->paddle->get_size().y;
+    // Sweeping this tick's flight path instead of testing the final
+    // position keeps a fast ball from slipping through the paddle.
+    const engine::Vec2f half{this->bounds.x / 2, this->bounds.y / 2};
+    const engine::Vec2f start = this->tick_start_pos + half;
+    const engine::Vec2f delta = this->getPosition() + half - start;
 
-    if ((x1 + w1) < x2)
-        return;
-    if ((y1 + h1) < y2)
-        return;
-    if ((x2 + w2) < x1)
-        return;
-    if ((y2 + h2) < y1)
-        return;
+    SweptHit hit;
 
-    // A ball whose bottom had already fallen past the paddle's top edge
-    // at the start of the tick is beyond saving: no side bounces.
-    if (this->tick_start_pos.y + h1 > y2)
+    if (!this->sweep_ball_rect(start, delta, p_pos, p_size, hit))
     {
         return;
     }
@@ -208,16 +204,16 @@ void CBall::collision_ball_paddle()
     // The ball hit the paddle from above: park it on top and recompute
     // the bounce direction from the impact point.
     engine::Vec2f new_pos;
-    new_pos.y = y2 - h1 - 1;
-    new_pos.x = x1;
+    new_pos.y = p_pos.y - this->bounds.y - 1;
+    new_pos.x = start.x + delta.x * hit.t - half.x;
     this->setPosition(new_pos);
 
-    float cp = (x2 + (w2 / 2)); // Paddle centre.
-    float cb = (x1 + (w1 / 2)); // Ball centre.
+    float cp = (p_pos.x + (p_size.x / 2));         // Paddle centre.
+    float cb = (new_pos.x + (this->bounds.x / 2)); // Ball centre.
 
     // Distance between centres over half the paddle width gives a
     // bounce angle factor between 0 and 1...
-    float radians = std::abs((cp - cb) / (w2 / 2));
+    float radians = std::abs((cp - cb) / (p_size.x / 2));
 
     // ...clamped so the ball never leaves near-parallel to the floor.
     if (radians > 0.7f)
@@ -249,7 +245,7 @@ void CBall::collision_ball_paddle()
     // velocity computed above is kept for when SPACE releases it.
     if (this->paddle->is_sticky())
     {
-        this->park_in_paddle(x1 - x2);
+        this->park_in_paddle(new_pos.x - p_pos.x);
     }
 }
 
@@ -280,7 +276,7 @@ std::vector<CBrick*> CBall::collision_ball_bricks(const std::list<std::unique_pt
         {
             SweptHit hit;
 
-            if (this->sweep_ball_brick(start, delta, brick.get(), hit) &&
+            if (this->sweep_ball_rect(start, delta, brick->getPosition(), brick->get_size(), hit) &&
                 (nearest == nullptr || hit.t < best.t))
             {
                 best = hit;
@@ -327,15 +323,16 @@ std::vector<CBrick*> CBall::collision_ball_bricks(const std::list<std::unique_pt
     return hit_bricks;
 }
 
-bool CBall::sweep_ball_brick(const engine::Vec2f& start, const engine::Vec2f& delta, CBrick* b,
-                             SweptHit& hit) const
+bool CBall::sweep_ball_rect(const engine::Vec2f& start, const engine::Vec2f& delta,
+                            const engine::Vec2f& rect_pos, const engine::Vec2f& rect_size,
+                            SweptHit& hit) const
 {
     const engine::Vec2f half{this->bounds.x / 2, this->bounds.y / 2};
 
-    const float left = b->getPosition().x - half.x;
-    const float top = b->getPosition().y - half.y;
-    const float right = b->getPosition().x + b->get_size().x + half.x;
-    const float bottom = b->getPosition().y + b->get_size().y + half.y;
+    const float left = rect_pos.x - half.x;
+    const float top = rect_pos.y - half.y;
+    const float right = rect_pos.x + rect_size.x + half.x;
+    const float bottom = rect_pos.y + rect_size.y + half.y;
 
     // Slab method: entry/exit times of the segment through each axis' band.
     constexpr float INF = std::numeric_limits<float>::infinity();

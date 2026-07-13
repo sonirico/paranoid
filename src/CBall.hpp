@@ -62,10 +62,11 @@ class CBall : public CEntity
         engine::Vec2f eject;
     };
 
-    // Sweeps the ball's centre along the segment start + delta against one
-    // brick expanded by half the ball (Minkowski sum). True on impact.
-    bool sweep_ball_brick(const engine::Vec2f& start, const engine::Vec2f& delta, CBrick* b,
-                          SweptHit& hit) const;
+    // Sweeps the ball's centre along the segment start + delta against a
+    // rectangle expanded by half the ball (Minkowski sum). True on impact.
+    bool sweep_ball_rect(const engine::Vec2f& start, const engine::Vec2f& delta,
+                         const engine::Vec2f& rect_pos, const engine::Vec2f& rect_size,
+                         SweptHit& hit) const;
 
     engine::Animation animation;
 
@@ -102,8 +103,14 @@ class CBall : public CEntity
     static constexpr float MIN_VERTICAL_RATIO = 0.342f; // sin(20 degrees)
 
     // Where the ball started the current physics tick; a ball whose bottom
-    // was already past the paddle's top edge can no longer be saved.
+    // was already past the paddle's save grace can no longer be saved.
     engine::Vec2f tick_start_pos;
+
+    // How deep past the paddle's top edge (as a fraction of the paddle
+    // height) the ball's bottom may start a tick and still be bounced: a
+    // late paddle slide under a low ball counts as a save, while a ball
+    // clearly past the paddle keeps falling with no side bounce.
+    static constexpr float SAVE_GRACE = 0.5f;
 
     // A tick's flight path bounces off at most this many bricks.
     static constexpr unsigned int MAX_BRICK_BOUNCES = 3;

@@ -32,7 +32,7 @@ class CPaddle : public CEntity
   private:
     void check_bounds();
 
-    void check_mouse();
+    void check_mouse(const float dt);
 
     void apply_width_factor(float factor);
 
@@ -46,6 +46,12 @@ class CPaddle : public CEntity
     // Negative until the first reading; the paddle only follows the mouse
     // while it moves, so keyboard and mouse can coexist.
     float last_mouse_x = -1.f;
+
+    // Where the cursor last asked the paddle to go. The paddle chases it
+    // at keyboard speed instead of teleporting; keyboard input cancels
+    // the chase.
+    float mouse_target_x = 0.f;
+    bool chasing_mouse = false;
     bool sticky = false;
     bool laser = false;
     bool spin = false;

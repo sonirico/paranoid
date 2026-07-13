@@ -4,6 +4,8 @@
 
 #include <SDL3/SDL.h>
 
+#include <cmath>
+
 CPaddle::CPaddle(CState* st)
 {
     this->state = st;
@@ -63,14 +65,16 @@ void CPaddle::update(const float dt)
     {
         this->move(this->velocity * dt);
         this->dir = 1;
+        this->chasing_mouse = false;
     }
     if (keys[SDL_SCANCODE_LEFT])
     {
         this->move(this->velocity * -dt);
         this->dir = -1;
+        this->chasing_mouse = false;
     }
 
-    this->check_mouse();
+    this->check_mouse(dt);
 
     this->animated_sprite.update(dt);
     this->animated_sprite.play();
@@ -135,7 +139,7 @@ bool CPaddle::has_spin() const
     return this->spin;
 }
 
-void CPaddle::check_mouse()
+void CPaddle::check_mouse(const float dt)
 {
     float mouse_x = 0.f;
     SDL_GetMouseState(&mouse_x, nullptr);
@@ -148,13 +152,33 @@ void CPaddle::check_mouse()
         return;
     }
 
-    // The mouse takes over only while it moves; otherwise keyboard rules.
+    // The mouse takes over when it moves; the last input wins.
     if (mouse_x != this->last_mouse_x)
     {
-        this->dir = mouse_x > this->last_mouse_x ? 1 : -1;
         this->last_mouse_x = mouse_x;
+        this->mouse_target_x = mouse_x - this->bounds.x / 2;
+        this->chasing_mouse = true;
+    }
 
-        this->setPosition(mouse_x - this->bounds.x / 2, this->getPosition().y);
+    if (!this->chasing_mouse)
+    {
+        return;
+    }
+
+    // Chase the cursor at the same top speed as the keyboard, so the
+    // mouse cannot move the paddle any faster.
+    const float dx = this->mouse_target_x - this->getPosition().x;
+    const float step = this->velocity.x * dt;
+
+    if (std::abs(dx) <= step)
+    {
+        this->setPosition(this->mouse_target_x, this->getPosition().y);
+        this->chasing_mouse = false;
+    }
+    else
+    {
+        this->move({dx > 0 ? step : -step, 0.f});
+        this->dir = dx > 0 ? 1 : -1;
     }
 }
 

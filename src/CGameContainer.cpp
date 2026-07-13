@@ -29,8 +29,7 @@ void CGameContainer::events()
             break;
         }
 
-        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE &&
-            !event.key.repeat)
+        if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_ESCAPE && !event.key.repeat)
         {
             this->paused = !this->paused;
         }
