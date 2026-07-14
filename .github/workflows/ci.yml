@@ -95,10 +95,59 @@ jobs:
           name: paranoid-windows-amd64
           path: paranoid-windows-amd64.zip
 
+  macos:
+    name: macOS ${{ matrix.arch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+          - arch: amd64
+            runner: macos-15-intel
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: >-
+          brew install cmake ninja sdl3 sdl3_image googletest dylibbundler
+
+      - name: Configure
+        run: >-
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH="$(brew --prefix)"
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Package
+        run: |
+          mkdir -p dist/paranoid
+          cp build/paranoid dist/paranoid/
+          cp -r media dist/paranoid/
+          # Bundle the Homebrew dylibs the binary links against and point
+          # its load commands at them, so it runs on Macs without Homebrew.
+          dylibbundler -cd -b \
+            -x dist/paranoid/paranoid \
+            -d dist/paranoid/libs \
+            -p @executable_path/libs
+          # Rewriting load commands invalidates the signature; re-sign ad hoc.
+          codesign --force --sign - dist/paranoid/libs/*.dylib dist/paranoid/paranoid
+          tar -C dist -czf paranoid-darwin-${{ matrix.arch }}.tar.gz paranoid
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: paranoid-darwin-${{ matrix.arch }}
+          path: paranoid-darwin-${{ matrix.arch }}.tar.gz
+
   release:
     name: Release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [linux, windows]
+    needs: [linux, windows, macos]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
