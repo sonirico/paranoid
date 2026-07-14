@@ -12,6 +12,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <string>
 
@@ -49,10 +50,15 @@ void CPlayState::init()
 
 void CPlayState::play_stage_music()
 {
-    // Few tracks: cycle the backgrounds; the menu theme moonlights too.
-    const char* tracks[] = {"media/music/crystalhammer.ogg", "media/music/arkanoid.ogg"};
+    // Each stage picks the next background from the rotation.
+    const char* tracks[] = {
+        "media/music/crystalhammer.ogg", "media/music/arkanoid.ogg",
+        "media/music/amiga_euphorie.ogg", "media/music/bst_7str.ogg",
+        "media/music/iyarms.ogg",         "media/music/mangotetris.ogg",
+        "media/music/tetrisduel.ogg",     "media/music/tetrismusicb.ogg",
+    };
 
-    this->gc->play_music(tracks[current_stage % 2], true);
+    this->gc->play_music(tracks[current_stage % std::size(tracks)], true);
 }
 
 void CPlayState::enter_intro(bool show_round)
@@ -63,13 +69,14 @@ void CPlayState::enter_intro(bool show_round)
     if (show_round)
     {
         // Stage starts open on the round jingle, played once; the card
-        // holds until it ends plus a beat, then the background track
-        // takes over. Without a jingle (tests) use the fixed fallback.
+        // holds until it ends plus a short beat, then the background
+        // track takes over. Without a jingle (tests) use the fixed
+        // fallback.
         this->gc->play_music("media/music/stage.ogg", false);
 
         const float jingle = this->gc->get_music_duration();
 
-        this->phase_time = jingle > 0 ? jingle + 1.f : ROUND_INTRO_DURATION;
+        this->phase_time = jingle > 0 ? jingle + .25f : ROUND_INTRO_DURATION;
     }
     else
     {

@@ -66,7 +66,7 @@ class CPlayState : public CState
     static constexpr float BONUS_DURATION = 10.f;
 
     // Fallback length of the round card when no jingle could load; with
-    // one, the card lasts the jingle plus a one-second beat.
+    // one, the card lasts the jingle plus a quarter-second beat.
     static constexpr float ROUND_INTRO_DURATION = 4.f;
 
     // Applies a collected bonus capsule to the game.
