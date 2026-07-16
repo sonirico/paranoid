@@ -2,6 +2,7 @@
 
 #include "CGameContainer.hpp"
 #include "CStageStore.hpp"
+#include "CStarfield.hpp"
 #include "engine/Gamepad.hpp"
 #include "engine/Text.hpp"
 
@@ -744,6 +745,12 @@ void CPlayState::lose_life()
 
     this->gc->play_fx(game::game_fx::MUERTE);
 
+    // The whole sky flares with the explosion.
+    if (this->gc->starfield != nullptr)
+    {
+        this->gc->starfield->pulse(0.6f);
+    }
+
     this->start_paddle_death();
 
     if (this->lives == 0)
@@ -1138,6 +1145,12 @@ bool CPlayState::update_bricks(const float dt)
         // the render interpolation so nothing shivers while frozen.
         this->hitstop_time = HITSTOP_DURATION;
         this->snapshot_entities();
+
+        // The stars behind the wall light up with the kill.
+        if (this->gc->starfield != nullptr)
+        {
+            this->gc->starfield->pulse(0.15f * killed);
+        }
 
         // Several bricks in one tick (a megaball plough, a tight
         // carom) also kick the screen sideways for a moment.

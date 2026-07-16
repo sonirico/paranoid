@@ -2,6 +2,7 @@
 #include "CPlayState.hpp"
 #include "CResourceHolder.hpp"
 #include "CStageStore.hpp"
+#include "CStarfield.hpp"
 #include "engine/AudioDevice.hpp"
 #include "engine/Music.hpp"
 #include "engine/Window.hpp"
@@ -641,6 +642,25 @@ TEST_F(PlayStateTest, BrickKillFreezesTheGameForABlink)
     }
 
     EXPECT_NE(ball->getPosition().y, frozen.y);
+}
+
+TEST_F(PlayStateTest, BrickKillPulsesTheBackdrop)
+{
+    CStarfield field;
+    container->starfield = &field;
+
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 10 && play_state->get_bricks().size() > 0; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_TRUE(play_state->get_bricks().empty());
+    EXPECT_GT(field.get_pulse(), 0.f);
+
+    container->starfield = nullptr;
 }
 
 TEST_F(PlayStateTest, ComboCountsKillsAndResetsOnPaddleReturn)

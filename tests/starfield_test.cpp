@@ -53,6 +53,25 @@ TEST_F(StarfieldTest, ShootingStarEventuallyCrossesTheSky)
     EXPECT_TRUE(seen);
 }
 
+TEST_F(StarfieldTest, PulseBrightensThenDecaysOnItsOwn)
+{
+    CStarfield field;
+
+    EXPECT_FLOAT_EQ(field.get_pulse(), 0.f);
+
+    field.pulse(1.f);
+
+    EXPECT_GT(field.get_pulse(), 0.9f);
+
+    // The decay is exponential: a few seconds leave next to nothing.
+    for (unsigned int i = 0; i < game::FRAMES * 3; ++i)
+    {
+        field.update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_LT(field.get_pulse(), 0.05f);
+}
+
 TEST_F(StarfieldTest, DriftsAndDrawsAfterALongRun)
 {
     CStarfield field;

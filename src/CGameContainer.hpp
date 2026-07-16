@@ -16,6 +16,7 @@ class Music;
 // Shared services every state needs: the window, the loaded resources
 // and the sound-effect voices. Owns none of its dependencies.
 class CStageStore;
+class CStarfield;
 
 class CGameContainer
 {
@@ -65,6 +66,10 @@ class CGameContainer
 
     // The stage walls loaded from media/stages.
     CStageStore* stages = nullptr;
+
+    // The backdrop, when main wired one up (tests may leave it null);
+    // states pulse it on big moments.
+    CStarfield* starfield = nullptr;
 
   private:
     // One dedicated voice per effect, indexed by its fx id.

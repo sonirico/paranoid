@@ -25,6 +25,11 @@ class CStarfield
     std::size_t get_star_count() const;
     bool has_shooting_star() const;
 
+    // Briefly brightens the whole field; strength stacks up to 1 and
+    // decays on its own (brick kills, deaths).
+    void pulse(float strength);
+    float get_pulse() const;
+
   private:
     struct Star
     {
@@ -53,6 +58,9 @@ class CStarfield
     engine::Vec2f shot_vel;
     float shot_life = 0;
     float shot_cooldown = 8.f;
+
+    // Extra brightness from pulse(), decaying exponentially.
+    float pulse_level = 0;
 
     static constexpr unsigned int LAYERS = 3;
     static constexpr unsigned int STARS_PER_LAYER = 36;

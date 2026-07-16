@@ -104,6 +104,7 @@ int main(int argc, char** argv)
         CGameStateManager gsm(&gc, smoke ? game::game_states::PLAY : game::game_states::MENU);
 
         CStarfield starfield;
+        gc.starfield = &starfield;
 
         engine::Clock clock;
         float time_since_last_update = 0;

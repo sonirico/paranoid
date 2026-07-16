@@ -68,9 +68,21 @@ void CStarfield::spawn_shooting_star()
     this->shot_cooldown = 8.f + std::rand() % 12;
 }
 
+void CStarfield::pulse(float strength)
+{
+    this->pulse_level = std::min(1.f, this->pulse_level + strength);
+}
+
+float CStarfield::get_pulse() const
+{
+    return this->pulse_level;
+}
+
 void CStarfield::update(const float dt)
 {
     this->time += dt;
+
+    this->pulse_level -= this->pulse_level * 3.f * dt;
 
     if (this->shot_life > 0)
     {
@@ -104,12 +116,14 @@ void CStarfield::draw(engine::Window& target) const
 {
     for (const Star& star : this->stars)
     {
-        // The twinkle wave breathes each star between 60% and 100%.
+        // The twinkle wave breathes each star between 60% and 100%;
+        // a pulse from the game lifts the whole field on top of it.
         const float wave =
             0.8f + 0.2f * std::sin(2.f * 3.14159265f * star.twinkle_hz * this->time + star.phase);
+        const float boost = 1.f + this->pulse_level * 0.8f;
 
         engine::Color color = star.color;
-        color.a = static_cast<std::uint8_t>(color.a * wave);
+        color.a = static_cast<std::uint8_t>(std::min(255.f, color.a * wave * boost));
 
         target.drawRect(star.pos, {star.size, star.size}, color);
     }
