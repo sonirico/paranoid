@@ -69,14 +69,14 @@ void CPlayState::enter_intro(bool show_round)
     if (show_round)
     {
         // Stage starts open on the round jingle, played once; the card
-        // holds until it ends plus a short beat, then the background
-        // track takes over. Without a jingle (tests) use the fixed
+        // yields to gameplay just before the jingle's quiet tail, so the
+        // wait stays snappy. Without a jingle (tests) use the fixed
         // fallback.
         this->gc->play_music("media/music/stage.ogg", false);
 
         const float jingle = this->gc->get_music_duration();
 
-        this->phase_time = jingle > 0 ? jingle + .25f : ROUND_INTRO_DURATION;
+        this->phase_time = jingle > 0 ? std::max(jingle - .75f, 1.f) : ROUND_INTRO_DURATION;
     }
     else
     {
