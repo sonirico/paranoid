@@ -36,6 +36,7 @@ void load_resources(CResourceHolder& rh)
     rh.load(LIFEUP, "media/fx/lifeup.wav");
     rh.load(STICKY, "media/fx/sticky.wav");
     rh.load(SELECT, "media/fx/select.wav");
+    rh.load(CLING, "media/fx/cling.wav");
 }
 } // namespace
 

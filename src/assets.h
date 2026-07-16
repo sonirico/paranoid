@@ -96,6 +96,7 @@ enum fx
     LIFEUP,
     STICKY,
     SELECT,
+    CLING,
     COUNT
 };
 };

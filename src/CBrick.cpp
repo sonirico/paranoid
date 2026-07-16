@@ -1,5 +1,6 @@
 #include "CBrick.hpp"
 
+#include "CGameContainer.hpp"
 #include "CPlayState.hpp"
 #include "CResourceHolder.hpp"
 
@@ -116,6 +117,15 @@ void CBrick::settings()
 
 void CBrick::quit_life()
 {
+    // A dry metallic cling tells the player at the first touch that
+    // this brick cannot be broken.
+    if (this->type == UNDESTROYABLE)
+    {
+        this->state->gc->play_fx(game::game_fx::CLING);
+
+        return;
+    }
+
     if (this->lifes > 0)
     {
         this->lifes--;

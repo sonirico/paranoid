@@ -13,7 +13,7 @@ CGameContainer::CGameContainer(engine::Window* window, engine::AudioDevice* audi
     : window(window), rh(rh), music(music),
       current_sound{engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
                     engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
-                    engine::Sound(*audio), engine::Sound(*audio)}
+                    engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio)}
 {
     for (int i = 0; i < game::game_fx::COUNT; ++i)
     {

@@ -41,6 +41,7 @@ class GameSmokeTest : public ::testing::Test
         holder->load(game::game_fx::LIFEUP, TEST_MEDIA_DIR "/fx/lifeup.wav");
         holder->load(game::game_fx::STICKY, TEST_MEDIA_DIR "/fx/sticky.wav");
         holder->load(game::game_fx::SELECT, TEST_MEDIA_DIR "/fx/select.wav");
+        holder->load(game::game_fx::CLING, TEST_MEDIA_DIR "/fx/cling.wav");
 
         music = std::make_unique<engine::Music>(*audio);
 
@@ -149,6 +150,17 @@ TEST_F(GameSmokeTest, GoldBrickSurvivesTwoHits)
     brick.quit_life();
 
     EXPECT_TRUE(brick.is_removable());
+}
+
+TEST_F(GameSmokeTest, UndestroyableBrickShrugsOffHits)
+{
+    CGameStateManager manager(container.get(), game::game_states::PLAY);
+    CBrick brick(manager.getCurrentState(), game::game_bricks::UNDESTROYABLE);
+
+    brick.quit_life();
+    brick.quit_life();
+
+    EXPECT_FALSE(brick.is_removable());
 }
 
 TEST_F(GameSmokeTest, VolumeSettingsClampAndPersist)
