@@ -282,6 +282,41 @@ TEST_F(PlayStateTest, CatchingACapsuleRestartsTheCountdown)
     EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::C);
 }
 
+TEST_F(PlayStateTest, PickupBlinksThePaddle)
+{
+    EXPECT_FALSE(play_state->get_paddle()->is_flashing());
+
+    play_state->apply_bonus(game::game_bonus::E);
+
+    EXPECT_TRUE(play_state->get_paddle()->is_flashing());
+}
+
+TEST_F(PlayStateTest, PickupThrowsAColorBurst)
+{
+    ASSERT_EQ(play_state->get_particle_count(), 0u);
+
+    play_state->apply_bonus(game::game_bonus::L);
+
+    EXPECT_GT(play_state->get_particle_count(), 0u);
+}
+
+TEST_F(PlayStateTest, PickupFloatsTheCapsuleNameBriefly)
+{
+    ASSERT_EQ(play_state->get_floating_text_count(), 0u);
+
+    play_state->apply_bonus(game::game_bonus::L);
+
+    ASSERT_EQ(play_state->get_floating_text_count(), 1u);
+
+    // Just over the label's lifetime: it rose, faded and is gone.
+    for (int i = 0; i < 70; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_EQ(play_state->get_floating_text_count(), 0u);
+}
+
 TEST_F(PlayStateTest, LosingALifeDropsTheActiveBonus)
 {
     play_state->apply_bonus(game::game_bonus::L);

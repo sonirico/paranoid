@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <list>
 #include <memory>
+#include <string>
 #include <vector>
 
 class CGameContainer;
@@ -61,6 +62,7 @@ class CPlayState : public CState
     game::game_bonus::bonus get_active_bonus() const;
 
     std::size_t get_particle_count() const;
+    std::size_t get_floating_text_count() const;
 
     // How long a mode capsule stays in effect before wearing off.
     static constexpr float BONUS_DURATION = 10.f;
@@ -112,8 +114,28 @@ class CPlayState : public CState
     void spawn_brick_particles(CBrick* brick);
     // A small burst where the ball just bounced or a brick took a hit.
     void spawn_impact_sparks(const engine::Vec2f& center, const engine::Color& color);
+    // A bigger celebration burst in the capsule's color (pickups).
+    void spawn_pickup_burst(const engine::Vec2f& center, const engine::Color& color);
     void update_particles(const float dt);
     void render_particles();
+
+    // A short label that rises and fades (capsule names, score pops).
+    struct FloatingText
+    {
+        std::string text;
+        engine::Vec2f pos;
+        float life = 0;
+        engine::Color color;
+    };
+
+    void spawn_floating_text(const std::string& text, const engine::Vec2f& pos,
+                             const engine::Color& color);
+    void update_floating_texts(const float dt);
+    void render_floating_texts();
+
+    // The capsule letter's display name and burst color.
+    static std::string get_bonus_name(game::game_bonus::bonus type);
+    static engine::Color get_bonus_color(game::game_bonus::bonus type);
 
     // Kicks the screen sideways for a moment (life loss, game over).
     void start_shake(float duration, float strength);
@@ -187,6 +209,7 @@ class CPlayState : public CState
     bool break_pending = false;
 
     std::vector<Particle> particles;
+    std::vector<FloatingText> floating_texts;
 
     float shake_time = 0;
     float shake_strength = 0;
@@ -198,6 +221,10 @@ class CPlayState : public CState
     static constexpr float PARTICLE_GRAVITY = 400.f;
     static constexpr unsigned int PARTICLES_PER_BRICK = 10;
     static constexpr unsigned int SPARKS_PER_IMPACT = 4;
+    static constexpr unsigned int PARTICLES_PER_PICKUP = 12;
+
+    static constexpr float FLOATING_TEXT_LIFE = 0.9f;
+    static constexpr float FLOATING_TEXT_RISE = 45.f;
 
     static constexpr float PADDLE_DEATH_DURATION = 0.6f;
     static constexpr unsigned int PADDLE_DEATH_FRAMES = 5;

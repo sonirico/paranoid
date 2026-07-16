@@ -15,6 +15,13 @@ class CPaddle : public CEntity
     void update(const float dt) override;
     void reset() override;
 
+    // Draws the sprite plus a fading white overlay while a flash runs.
+    void draw(engine::Window& target) const override;
+
+    // Blinks the paddle white for a moment (capsule pickups).
+    void start_flash();
+    bool is_flashing() const;
+
     // Bonus-driven modes. Applying any mode clears the previous one.
     void reset_modes();
     void expand();
@@ -59,4 +66,9 @@ class CPaddle : public CEntity
     bool sticky = false;
     bool laser = false;
     bool spin = false;
+
+    // Time left on the white blink a pickup triggers.
+    float flash_time = 0;
+
+    static constexpr float FLASH_DURATION = 0.15f;
 };

@@ -224,6 +224,7 @@ int CPlayState::update(const float dt)
     this->update_lasers(dt);
     this->update_active_bonus(dt);
     this->update_particles(dt);
+    this->update_floating_texts(dt);
 
     if (this->update_bricks(dt))
     {
@@ -270,6 +271,23 @@ void CPlayState::spawn_impact_sparks(const engine::Vec2f& center, const engine::
     }
 }
 
+void CPlayState::spawn_pickup_burst(const engine::Vec2f& center, const engine::Color& color)
+{
+    for (unsigned int i = 0; i < PARTICLES_PER_PICKUP; ++i)
+    {
+        const float angle = (std::rand() % 360) * 3.14159265f / 180.f;
+        const float speed = 60.f + std::rand() % 120;
+
+        Particle p;
+        p.pos = center;
+        p.vel = {std::cos(angle) * speed, std::sin(angle) * speed - 80.f};
+        p.life = 0.35f + (std::rand() % 25) / 100.f;
+        p.color = color;
+
+        this->particles.push_back(p);
+    }
+}
+
 void CPlayState::update_particles(const float dt)
 {
     for (auto it = this->particles.begin(); it != this->particles.end();)
@@ -302,6 +320,57 @@ void CPlayState::render_particles()
     }
 }
 
+void CPlayState::spawn_floating_text(const std::string& text, const engine::Vec2f& pos,
+                                     const engine::Color& color)
+{
+    FloatingText ft;
+    ft.text = text;
+    ft.pos = pos;
+    ft.life = FLOATING_TEXT_LIFE;
+    ft.color = color;
+
+    this->floating_texts.push_back(ft);
+}
+
+void CPlayState::update_floating_texts(const float dt)
+{
+    for (auto it = this->floating_texts.begin(); it != this->floating_texts.end();)
+    {
+        it->life -= dt;
+
+        if (it->life <= 0)
+        {
+            it = this->floating_texts.erase(it);
+            continue;
+        }
+
+        it->pos.y -= FLOATING_TEXT_RISE * dt;
+
+        ++it;
+    }
+}
+
+void CPlayState::render_floating_texts()
+{
+    for (const FloatingText& ft : this->floating_texts)
+    {
+        engine::Text label;
+        label.setFont(this->gc->font);
+        label.setString(ft.text);
+        label.setScale({2.f, 2.f});
+
+        // Fade out over the label's second half, centered on its spot.
+        engine::Color color = ft.color;
+        color.a =
+            static_cast<std::uint8_t>(std::min(1.f, ft.life / (FLOATING_TEXT_LIFE * 0.5f)) * 255);
+        label.setColor(color);
+
+        label.setPosition(ft.pos.x - label.getGlobalBounds().width / 2, ft.pos.y);
+
+        this->gc->window->draw(label);
+    }
+}
+
 void CPlayState::start_shake(float duration, float strength)
 {
     this->shake_time = duration;
@@ -311,6 +380,11 @@ void CPlayState::start_shake(float duration, float strength)
 std::size_t CPlayState::get_particle_count() const
 {
     return this->particles.size();
+}
+
+std::size_t CPlayState::get_floating_text_count() const
+{
+    return this->floating_texts.size();
 }
 
 void CPlayState::render()
@@ -328,6 +402,7 @@ void CPlayState::render()
     this->render_balls();
     this->render_bonus();
     this->render_particles();
+    this->render_floating_texts();
     this->render_lasers();
     this->render_lives();
     this->render_active_bonus();
@@ -473,42 +548,82 @@ void CPlayState::save_high_score()
     }
 }
 
-void CPlayState::render_active_bonus()
+std::string CPlayState::get_bonus_name(game::game_bonus::bonus type)
 {
     using namespace game::game_bonus;
 
-    std::string name;
-
-    switch (this->active_bonus)
+    switch (type)
     {
     case E:
-        name = "EXPAND";
-        break;
+        return "EXPAND";
     case R:
-        name = "SHRINK";
-        break;
+        return "SHRINK";
     case C:
-        name = "STICKY";
-        break;
+        return "STICKY";
     case L:
-        name = "LASER";
-        break;
+        return "LASER";
     case T:
-        name = "SPIN";
-        break;
+        return "SPIN";
     case M:
-        name = "MEGA";
-        break;
+        return "MEGA";
     case N:
-        name = "NET";
-        break;
+        return "NET";
     case S:
-        name = "SLOW";
-        break;
+        return "SLOW";
     case P:
-        name = "FAST";
-        break;
+        return "FAST";
+    case X:
+        return "1UP";
+    case D:
+        return "TRIPLE";
+    case B:
+        return "BREAK";
     default:
+        return "";
+    }
+}
+
+engine::Color CPlayState::get_bonus_color(game::game_bonus::bonus type)
+{
+    using namespace game::game_bonus;
+
+    switch (type)
+    {
+    case E:
+        return {0, 112, 236, 255};
+    case R:
+        return {216, 40, 0, 255};
+    case C:
+        return {0, 168, 0, 255};
+    case L:
+        return {252, 56, 56, 255};
+    case T:
+        return {252, 152, 56, 255};
+    case M:
+        return {255, 120, 30, 255};
+    case N:
+        return {0, 220, 255, 255};
+    case S:
+        return {80, 120, 255, 255};
+    case P:
+        return {216, 40, 200, 255};
+    case X:
+        return {240, 188, 60, 255};
+    case D:
+        return {0, 232, 216, 255};
+    case B:
+        return {255, 105, 180, 255};
+    default:
+        return engine::Color::White;
+    }
+}
+
+void CPlayState::render_active_bonus()
+{
+    std::string name = get_bonus_name(this->active_bonus);
+
+    if (name.empty())
+    {
         return;
     }
 
@@ -704,6 +819,17 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
 
     this->gc->play_fx(pickup_sound);
 
+    // Catching a capsule is a small party: the paddle blinks white,
+    // the capsule's color bursts over it and its name floats up.
+    const engine::Vec2f paddle_center =
+        this->paddle->getPosition() + this->paddle->get_size() * 0.5f;
+
+    this->paddle->start_flash();
+    this->spawn_pickup_burst(paddle_center, get_bonus_color(type));
+    this->spawn_floating_text(get_bonus_name(type) + "!",
+                              {paddle_center.x, this->paddle->getPosition().y - 26.f},
+                              get_bonus_color(type));
+
     switch (type)
     {
     case E:
@@ -736,9 +862,6 @@ void CPlayState::apply_bonus(game::game_bonus::bonus type)
         // play it is the one the player is actually tracking.
         CBall* source = nullptr;
         float best_distance = std::numeric_limits<float>::max();
-
-        const engine::Vec2f paddle_center =
-            this->paddle->getPosition() + this->paddle->get_size() * 0.5f;
 
         for (auto& ball : this->balls)
         {

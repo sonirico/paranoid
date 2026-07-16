@@ -3,6 +3,7 @@
 #include "CGameContainer.hpp"
 #include "CResourceHolder.hpp"
 #include "engine/Gamepad.hpp"
+#include "engine/Window.hpp"
 
 #include <SDL3/SDL.h>
 
@@ -91,7 +92,35 @@ void CPaddle::update(const float dt)
     this->animated_sprite.update(dt);
     this->animated_sprite.play();
 
+    if (this->flash_time > 0)
+    {
+        this->flash_time -= dt;
+    }
+
     this->check_bounds();
+}
+
+void CPaddle::draw(engine::Window& target) const
+{
+    CEntity::draw(target);
+
+    if (this->flash_time > 0)
+    {
+        engine::Color overlay = engine::Color::White;
+        overlay.a = static_cast<std::uint8_t>(this->flash_time / FLASH_DURATION * 200);
+
+        target.drawRect(this->getPosition(), this->bounds, overlay);
+    }
+}
+
+void CPaddle::start_flash()
+{
+    this->flash_time = FLASH_DURATION;
+}
+
+bool CPaddle::is_flashing() const
+{
+    return this->flash_time > 0;
 }
 
 void CPaddle::reset()
