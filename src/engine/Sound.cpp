@@ -51,6 +51,14 @@ void Sound::setVolume(float volume)
     }
 }
 
+void Sound::setPitch(float ratio)
+{
+    if (m_stream)
+    {
+        SDL_SetAudioStreamFrequencyRatio(m_stream, ratio);
+    }
+}
+
 void Sound::play()
 {
     if (!m_stream || !m_buffer)

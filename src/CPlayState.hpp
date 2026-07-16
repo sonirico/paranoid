@@ -64,6 +64,9 @@ class CPlayState : public CState
     std::size_t get_particle_count() const;
     std::size_t get_floating_text_count() const;
 
+    // Bricks killed since the ball last came back off the paddle.
+    unsigned int get_combo() const;
+
     // How long a mode capsule stays in effect before wearing off.
     static constexpr float BONUS_DURATION = 10.f;
 
@@ -197,6 +200,14 @@ class CPlayState : public CState
     // impact reads harder.
     static constexpr float HITSTOP_DURATION = 0.05f;
     float hitstop_time = 0;
+
+    // Kills in the current combo run; every COMBO_KILLS_PER_MULT of
+    // them raise the score multiplier by one and sharpen the kill pop.
+    unsigned int combo = 0;
+
+    static constexpr unsigned int COMBO_KILLS_PER_MULT = 4;
+    static constexpr float COMBO_PITCH_STEP = 0.05f;
+    static constexpr float COMBO_PITCH_MAX = 1.6f;
 
     game::game_bonus::bonus active_bonus = game::game_bonus::COUNT;
     float bonus_time_left = 0;

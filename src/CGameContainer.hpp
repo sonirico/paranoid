@@ -29,7 +29,7 @@ class CGameContainer
     // Drains the OS event queue; closes the window on quit.
     void events();
 
-    void play_fx(game::game_fx::fx id);
+    void play_fx(game::game_fx::fx id, float pitch = 1.f);
 
     // Switches the background track; asking for the track that is
     // already playing is a no-op. Non-looping tracks play once (jingles).

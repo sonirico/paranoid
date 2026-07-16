@@ -66,6 +66,7 @@ void CPlayState::enter_intro(bool show_round)
     this->phase = Phase::Intro;
     this->intro_shows_round = show_round;
     this->hitstop_time = 0;
+    this->combo = 0;
 
     if (show_round)
     {
@@ -385,6 +386,11 @@ std::size_t CPlayState::get_particle_count() const
 std::size_t CPlayState::get_floating_text_count() const
 {
     return this->floating_texts.size();
+}
+
+unsigned int CPlayState::get_combo() const
+{
+    return this->combo;
 }
 
 void CPlayState::render()
@@ -709,6 +715,13 @@ void CPlayState::update_balls(const float dt)
             {
                 this->spawn_impact_sparks(ball->getPosition() + ball->get_size() * 0.5f,
                                           {220, 220, 255, 255});
+
+                // Coming back up off the paddle (or the net) closes
+                // the combo run.
+                if (v_before.y > 0 && v_after.y < 0)
+                {
+                    this->combo = 0;
+                }
             }
 
             ++it;
@@ -1081,8 +1094,25 @@ bool CPlayState::update_bricks(const float dt)
 
         if (brick->is_removable())
         {
-            this->score += brick->get_score();
+            this->combo++;
+
+            // A longer run without touching the paddle multiplies the
+            // points and sharpens the kill pop's pitch.
+            const unsigned int mult = 1 + (this->combo - 1) / COMBO_KILLS_PER_MULT;
+
+            this->score += brick->get_score() * mult;
             this->high_score = std::max(this->high_score, this->score);
+
+            this->gc->play_fx(
+                game::game_fx::POINTS,
+                std::min(1.f + COMBO_PITCH_STEP * (this->combo - 1), COMBO_PITCH_MAX));
+
+            if (mult > 1)
+            {
+                this->spawn_floating_text("X" + std::to_string(mult),
+                                          brick->getPosition() + brick->get_size() * 0.5f,
+                                          {248, 216, 0, 255});
+            }
 
             this->spawn_brick_particles(brick);
             this->insert_bonus(brick);

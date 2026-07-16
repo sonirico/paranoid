@@ -79,11 +79,12 @@ void CGameContainer::stop_music()
     this->current_music.clear();
 }
 
-void CGameContainer::play_fx(game::game_fx::fx id)
+void CGameContainer::play_fx(game::game_fx::fx id, float pitch)
 {
     int i = static_cast<int>(id);
 
     this->current_sound[i].setVolume(this->fx_volume);
+    this->current_sound[i].setPitch(pitch);
     this->current_sound[i].play();
 }
 

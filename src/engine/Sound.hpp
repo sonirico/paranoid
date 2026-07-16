@@ -24,6 +24,9 @@ class Sound
     // Volume in the 0..100 range, matching what the game code expects.
     void setVolume(float volume);
 
+    // Playback speed ratio: 1 is natural, higher is faster and sharper.
+    void setPitch(float ratio);
+
     void play();
 
   private:

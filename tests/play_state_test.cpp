@@ -643,6 +643,51 @@ TEST_F(PlayStateTest, BrickKillFreezesTheGameForABlink)
     EXPECT_NE(ball->getPosition().y, frozen.y);
 }
 
+TEST_F(PlayStateTest, ComboCountsKillsAndResetsOnPaddleReturn)
+{
+    EXPECT_EQ(play_state->get_combo(), 0u);
+
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 10 && play_state->get_combo() == 0; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_EQ(play_state->get_combo(), 1u);
+
+    // Drop the ball onto the paddle: the catch closes the run.
+    CPaddle* paddle = play_state->get_paddle();
+    launchBall({paddle->getPosition().x + 10.f, paddle->getPosition().y - 40.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 60 && play_state->get_combo() != 0; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_EQ(play_state->get_combo(), 0u);
+}
+
+TEST_F(PlayStateTest, LongComboMultipliesTheScore)
+{
+    // Five kills with no paddle catch in between: the fifth pays double.
+    for (int kill = 0; kill < 5; ++kill)
+    {
+        placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+        launchBall({211.f, 80.f}, {0.f, 300.f});
+
+        for (int i = 0; i < 10 && !play_state->get_bricks().empty(); ++i)
+        {
+            play_state->update(game::TIME_PER_FRAME);
+        }
+
+        ASSERT_TRUE(play_state->get_bricks().empty());
+    }
+
+    EXPECT_EQ(play_state->get_score(), 60u);
+}
+
 TEST_F(PlayStateTest, GameOverKeepsTheHighScore)
 {
     placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
