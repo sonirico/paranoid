@@ -573,6 +573,41 @@ TEST_F(PlayStateTest, ChippedBrickThrowsSparks)
     EXPECT_GT(play_state->get_particle_count(), 0u);
 }
 
+TEST_F(PlayStateTest, BrickKillFreezesTheGameForABlink)
+{
+    // Two bricks so the kill doesn't clear the stage.
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);
+
+    auto extra = std::make_unique<CBrick>(play_state.get(), game::game_bricks::RED);
+    extra->setPosition({400.f, 300.f});
+    play_state->get_bricks().push_back(std::move(extra));
+
+    CBall* ball = launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    for (int i = 0; i < 10 && play_state->get_bricks().size() > 1; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_EQ(play_state->get_bricks().size(), 1u);
+
+    // The next tick lands inside the hit-stop: nothing moves.
+    const engine::Vec2f frozen = ball->getPosition();
+
+    play_state->update(game::TIME_PER_FRAME);
+
+    EXPECT_FLOAT_EQ(ball->getPosition().x, frozen.x);
+    EXPECT_FLOAT_EQ(ball->getPosition().y, frozen.y);
+
+    // A few ticks later the freeze is over and the ball flies again.
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_NE(ball->getPosition().y, frozen.y);
+}
+
 TEST_F(PlayStateTest, GameOverKeepsTheHighScore)
 {
     placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);

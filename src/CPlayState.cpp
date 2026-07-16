@@ -65,6 +65,7 @@ void CPlayState::enter_intro(bool show_round)
 {
     this->phase = Phase::Intro;
     this->intro_shows_round = show_round;
+    this->hitstop_time = 0;
 
     if (show_round)
     {
@@ -195,6 +196,13 @@ int CPlayState::update(const float dt)
             this->gc->window->close();
             break;
         }
+
+        return NULLSTATE;
+    }
+
+    if (this->hitstop_time > 0)
+    {
+        this->hitstop_time -= dt;
 
         return NULLSTATE;
     }
@@ -942,6 +950,8 @@ bool CPlayState::update_bricks(const float dt)
         }
     }
 
+    unsigned int killed = 0;
+
     for (auto it = this->bricks.begin(); it != this->bricks.end();)
     {
         CBrick* brick = it->get();
@@ -956,6 +966,7 @@ bool CPlayState::update_bricks(const float dt)
             it = this->bricks.erase(it);
 
             this->total_bricks--;
+            killed++;
 
             if (this->total_bricks <= 0)
             {
@@ -966,6 +977,14 @@ bool CPlayState::update_bricks(const float dt)
         {
             ++it;
         }
+    }
+
+    if (killed > 0)
+    {
+        // Freeze the action for a blink; snapshotting right away pins
+        // the render interpolation so nothing shivers while frozen.
+        this->hitstop_time = HITSTOP_DURATION;
+        this->snapshot_entities();
     }
 
     return false;

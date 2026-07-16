@@ -171,6 +171,11 @@ class CPlayState : public CState
     static constexpr float READY_DURATION = 1.5f;
     static constexpr float GAME_OVER_DURATION = 3.f;
 
+    // Hit-stop: gameplay freezes this long when a brick dies, so the
+    // impact reads harder.
+    static constexpr float HITSTOP_DURATION = 0.05f;
+    float hitstop_time = 0;
+
     game::game_bonus::bonus active_bonus = game::game_bonus::COUNT;
     float bonus_time_left = 0;
 
