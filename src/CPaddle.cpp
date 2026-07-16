@@ -139,7 +139,9 @@ void CPaddle::set_laser(bool b)
     this->laser = b;
 
     // The paddle transforms: blue cannons while armed, normal otherwise.
+    // The morph runs slower than the shine cycle so it reads on screen.
     this->current_animation = b ? &this->laser_animation : &this->animation;
+    this->animated_sprite.setFrameTime(b ? 0.35f : 0.2f);
     this->animated_sprite.play(*this->current_animation);
 }
 
