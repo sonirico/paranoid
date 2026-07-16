@@ -37,6 +37,22 @@ TEST_F(StarfieldTest, GeneratesItsStars)
     EXPECT_GT(field.get_star_count(), 0u);
 }
 
+TEST_F(StarfieldTest, ShootingStarEventuallyCrossesTheSky)
+{
+    CStarfield field;
+
+    // The first cooldown arms at eight seconds: ten must catch one.
+    bool seen = false;
+
+    for (unsigned int i = 0; i < game::FRAMES * 10 && !seen; ++i)
+    {
+        field.update(game::TIME_PER_FRAME);
+        seen = field.has_shooting_star();
+    }
+
+    EXPECT_TRUE(seen);
+}
+
 TEST_F(StarfieldTest, DriftsAndDrawsAfterALongRun)
 {
     CStarfield field;

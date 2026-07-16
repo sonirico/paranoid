@@ -23,6 +23,7 @@ class CStarfield
     void draw(engine::Window& target) const;
 
     std::size_t get_star_count() const;
+    bool has_shooting_star() const;
 
   private:
     struct Star
@@ -39,11 +40,21 @@ class CStarfield
 
     Star spawn_star(unsigned int layer) const;
 
+    void spawn_shooting_star();
+
     std::vector<Star> stars;
 
     // Accumulated time driving the twinkle wave.
     float time = 0;
 
+    // The occasional shooting star: a bright streak that crosses part
+    // of the sky, burns out and rearms on a random cooldown.
+    engine::Vec2f shot_pos;
+    engine::Vec2f shot_vel;
+    float shot_life = 0;
+    float shot_cooldown = 8.f;
+
     static constexpr unsigned int LAYERS = 3;
     static constexpr unsigned int STARS_PER_LAYER = 36;
+    static constexpr float SHOT_LIFE = 0.7f;
 };

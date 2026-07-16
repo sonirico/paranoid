@@ -3,6 +3,7 @@
 #include "assets.h"
 #include "engine/Window.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdlib>
 
@@ -55,9 +56,36 @@ CStarfield::Star CStarfield::spawn_star(unsigned int layer) const
     return star;
 }
 
+void CStarfield::spawn_shooting_star()
+{
+    // Streaks diagonally across the top third, left or right at random.
+    const float direction = std::rand() % 2 == 0 ? 1.f : -1.f;
+
+    this->shot_pos = {static_cast<float>(std::rand() % game::WIDTH),
+                      static_cast<float>(std::rand() % (game::HEIGHT / 3))};
+    this->shot_vel = {direction * (250.f + std::rand() % 150), 120.f + std::rand() % 80};
+    this->shot_life = SHOT_LIFE;
+    this->shot_cooldown = 8.f + std::rand() % 12;
+}
+
 void CStarfield::update(const float dt)
 {
     this->time += dt;
+
+    if (this->shot_life > 0)
+    {
+        this->shot_life -= dt;
+        this->shot_pos += this->shot_vel * dt;
+    }
+    else
+    {
+        this->shot_cooldown -= dt;
+
+        if (this->shot_cooldown <= 0)
+        {
+            this->spawn_shooting_star();
+        }
+    }
 
     for (Star& star : this->stars)
     {
@@ -85,9 +113,30 @@ void CStarfield::draw(engine::Window& target) const
 
         target.drawRect(star.pos, {star.size, star.size}, color);
     }
+
+    if (this->shot_life > 0)
+    {
+        // A bright head trailing segments that fade along the path.
+        const engine::Vec2f step = this->shot_vel * 0.06f;
+        const float fade = std::min(1.f, this->shot_life / (SHOT_LIFE * 0.5f));
+
+        for (int i = 0; i < 3; ++i)
+        {
+            engine::Color color = engine::Color::White;
+            color.a = static_cast<std::uint8_t>(fade * (180 - i * 60));
+
+            target.drawLine(this->shot_pos - step * static_cast<float>(i),
+                            this->shot_pos - step * static_cast<float>(i + 1), color);
+        }
+    }
 }
 
 std::size_t CStarfield::get_star_count() const
 {
     return this->stars.size();
+}
+
+bool CStarfield::has_shooting_star() const
+{
+    return this->shot_life > 0;
 }
