@@ -570,6 +570,10 @@ void CPlayState::lose_life()
 {
     this->lives--;
 
+    // Death drops the mode capsule and its countdown, like in the
+    // arcade original.
+    this->cancel_active_bonus();
+
     this->gc->play_fx(game::game_fx::MUERTE);
 
     this->start_paddle_death();
@@ -1038,6 +1042,9 @@ void CPlayState::next_stage()
 
     this->balls.clear();
     this->bonus.clear();
+
+    // A new stage starts clean: no leftover mode or stale countdown.
+    this->cancel_active_bonus();
 
     this->load_bricks();
 

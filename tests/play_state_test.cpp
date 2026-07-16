@@ -254,6 +254,56 @@ TEST_F(PlayStateTest, AnyCapsuleCancelsTheActiveBonus)
     EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::COUNT);
 }
 
+TEST_F(PlayStateTest, CatchingACapsuleRestartsTheCountdown)
+{
+    play_state->apply_bonus(game::game_bonus::L);
+
+    // Burn most of the laser's countdown before catching sticky.
+    const int burn =
+        static_cast<int>((CPlayState::BONUS_DURATION - 1.f) / game::TIME_PER_FRAME);
+
+    for (int i = 0; i < burn; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    play_state->apply_bonus(game::game_bonus::C);
+
+    // Two more seconds: far past the laser's leftover, well inside the
+    // sticky's fresh countdown.
+    const int more = static_cast<int>(2.f / game::TIME_PER_FRAME);
+
+    for (int i = 0; i < more; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_TRUE(play_state->get_paddle()->is_sticky());
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::C);
+}
+
+TEST_F(PlayStateTest, LosingALifeDropsTheActiveBonus)
+{
+    play_state->apply_bonus(game::game_bonus::L);
+    ASSERT_TRUE(play_state->get_paddle()->has_laser());
+
+    loseAllBalls();
+
+    EXPECT_FALSE(play_state->get_paddle()->has_laser());
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::COUNT);
+}
+
+TEST_F(PlayStateTest, NextStageDropsTheActiveBonus)
+{
+    play_state->apply_bonus(game::game_bonus::L);
+    ASSERT_TRUE(play_state->get_paddle()->has_laser());
+
+    play_state->next_stage();
+
+    EXPECT_FALSE(play_state->get_paddle()->has_laser());
+    EXPECT_EQ(play_state->get_active_bonus(), game::game_bonus::COUNT);
+}
+
 TEST_F(PlayStateTest, StickyPaddleCatchesBallWhereItLanded)
 {
     play_state->apply_bonus(game::game_bonus::C);
