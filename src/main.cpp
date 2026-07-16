@@ -2,6 +2,7 @@
 #include "CGameStateManager.hpp"
 #include "CResourceHolder.hpp"
 #include "CStageStore.hpp"
+#include "CStarfield.hpp"
 #include "assets.h"
 #include "engine/AudioDevice.hpp"
 #include "engine/Clock.hpp"
@@ -23,7 +24,6 @@ void load_resources(CResourceHolder& rh)
     using namespace game::game_textures;
     using namespace game::game_fx;
 
-    rh.load(BACKGROUND, "media/textures/background.png");
     rh.load(MAIN, "media/textures/base.png");
     rh.load(BRICKS, "media/textures/bricks.png");
     rh.load(FONT, "media/textures/font.png");
@@ -103,8 +103,7 @@ int main(int argc, char** argv)
         // Smoke runs skip the menu so the frames exercise real gameplay.
         CGameStateManager gsm(&gc, smoke ? game::game_states::PLAY : game::game_states::MENU);
 
-        engine::Sprite background;
-        background.setTexture(rh.get(game::game_textures::BACKGROUND));
+        CStarfield starfield;
 
         engine::Clock clock;
         float time_since_last_update = 0;
@@ -123,6 +122,7 @@ int main(int argc, char** argv)
                 gc.events();
                 gamepad.update();
                 gsm.update(dt);
+                starfield.update(dt);
             }
 
             music.update();
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
 
             window.clear();
 
-            window.draw(background);
+            starfield.draw(window);
             gsm.render();
 
             window.display();

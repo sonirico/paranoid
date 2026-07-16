@@ -16,6 +16,7 @@ add_executable(paranoid_tests
     resource_holder_test.cpp
     game_smoke_test.cpp
     play_state_test.cpp
+    starfield_test.cpp
 )
 
 target_compile_definitions(paranoid_tests

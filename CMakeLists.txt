@@ -83,6 +83,7 @@ add_library(paranoid_game STATIC
     src/CPlayState.cpp
     src/CResourceHolder.cpp
     src/CStageStore.cpp
+    src/CStarfield.cpp
 )
 
 target_link_libraries(paranoid_game

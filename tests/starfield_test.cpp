@@ -1,0 +1,55 @@
+#include "CStarfield.hpp"
+#include "assets.h"
+#include "engine/Window.hpp"
+
+#include <SDL3/SDL.h>
+
+#include <gtest/gtest.h>
+#include <memory>
+
+// The procedural backdrop, exercised headless against the dummy
+// video driver.
+class StarfieldTest : public ::testing::Test
+{
+  protected:
+    void SetUp() override
+    {
+        ASSERT_TRUE(SDL_SetHint(SDL_HINT_VIDEO_DRIVER, "dummy"));
+        ASSERT_TRUE(SDL_Init(SDL_INIT_VIDEO)) << SDL_GetError();
+
+        window = std::make_unique<engine::Window>(game::TITLE, game::WIDTH, game::HEIGHT);
+        ASSERT_TRUE(window->isOpen()) << SDL_GetError();
+    }
+
+    void TearDown() override
+    {
+        window.reset();
+        SDL_Quit();
+    }
+
+    std::unique_ptr<engine::Window> window;
+};
+
+TEST_F(StarfieldTest, GeneratesItsStars)
+{
+    CStarfield field;
+
+    EXPECT_GT(field.get_star_count(), 0u);
+}
+
+TEST_F(StarfieldTest, DriftsAndDrawsAfterALongRun)
+{
+    CStarfield field;
+
+    // Half a minute of drift: every star wrapped at least once.
+    for (unsigned int i = 0; i < game::FRAMES * 30; ++i)
+    {
+        field.update(game::TIME_PER_FRAME);
+    }
+
+    window->clear();
+    field.draw(*window);
+    window->display();
+
+    EXPECT_GT(field.get_star_count(), 0u);
+}
