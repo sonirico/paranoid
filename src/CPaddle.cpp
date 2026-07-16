@@ -97,6 +97,10 @@ void CPaddle::update(const float dt)
 void CPaddle::reset()
 {
     this->setPosition((game::WIDTH - this->bounds.x) / 2, game::HEIGHT - 100);
+
+    // Seed the render interpolation so the paddle doesn't shiver
+    // between its old and new spot while the intro card is up.
+    this->snapshot();
 }
 
 void CPaddle::reset_modes()
