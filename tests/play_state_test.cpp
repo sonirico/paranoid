@@ -260,8 +260,7 @@ TEST_F(PlayStateTest, CatchingACapsuleRestartsTheCountdown)
     play_state->apply_bonus(game::game_bonus::L);
 
     // Burn most of the laser's countdown before catching sticky.
-    const int burn =
-        static_cast<int>((CPlayState::BONUS_DURATION - 1.f) / game::TIME_PER_FRAME);
+    const int burn = static_cast<int>((CPlayState::BONUS_DURATION - 1.f) / game::TIME_PER_FRAME);
 
     for (int i = 0; i < burn; ++i)
     {

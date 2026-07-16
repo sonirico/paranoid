@@ -52,7 +52,7 @@ void CPlayState::play_stage_music()
 {
     // Each stage picks the next background from the rotation.
     const char* tracks[] = {
-        "media/music/crystalhammer.ogg", "media/music/arkanoid.ogg",
+        "media/music/crystalhammer.ogg",  "media/music/arkanoid.ogg",
         "media/music/amiga_euphorie.ogg", "media/music/bst_7str.ogg",
         "media/music/iyarms.ogg",         "media/music/mangotetris.ogg",
         "media/music/tetrisduel.ogg",     "media/music/tetrismusicb.ogg",
