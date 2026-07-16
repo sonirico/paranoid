@@ -16,9 +16,13 @@ class CBrick : public CEntity
     void update(const float dt) override;
     void reset() override;
 
+    // Draws the sprite plus a fading white overlay while a hit flashes.
+    void draw(engine::Window& target) const override;
+
     void quit_life();
 
     bool is_removable() const;
+    bool is_flashing() const;
 
     unsigned int get_score() const;
 
@@ -38,6 +42,11 @@ class CBrick : public CEntity
     unsigned int score = 0;
 
     bool removable = false;
+
+    // Time left on the white blink a hit triggers.
+    float flash_time = 0;
+
+    static constexpr float FLASH_DURATION = 0.1f;
 
     std::vector<engine::IntRect> rects;
 };

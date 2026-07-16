@@ -152,6 +152,22 @@ TEST_F(GameSmokeTest, GoldBrickSurvivesTwoHits)
     EXPECT_TRUE(brick.is_removable());
 }
 
+TEST_F(GameSmokeTest, HitBrickFlashesBriefly)
+{
+    CGameStateManager manager(container.get(), game::game_states::PLAY);
+    CBrick brick(manager.getCurrentState(), game::game_bricks::SILVER);
+
+    EXPECT_FALSE(brick.is_flashing());
+
+    brick.quit_life();
+
+    EXPECT_TRUE(brick.is_flashing());
+
+    brick.update(0.2f);
+
+    EXPECT_FALSE(brick.is_flashing());
+}
+
 TEST_F(GameSmokeTest, UndestroyableBrickShrugsOffHits)
 {
     CGameStateManager manager(container.get(), game::game_states::PLAY);

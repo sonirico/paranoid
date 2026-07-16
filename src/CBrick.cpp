@@ -3,6 +3,7 @@
 #include "CGameContainer.hpp"
 #include "CPlayState.hpp"
 #include "CResourceHolder.hpp"
+#include "engine/Window.hpp"
 
 using namespace game::game_bricks;
 
@@ -29,6 +30,24 @@ void CBrick::init()
 void CBrick::update(const float dt)
 {
     this->animated_sprite.update(dt);
+
+    if (this->flash_time > 0)
+    {
+        this->flash_time -= dt;
+    }
+}
+
+void CBrick::draw(engine::Window& target) const
+{
+    CEntity::draw(target);
+
+    if (this->flash_time > 0)
+    {
+        engine::Color overlay = engine::Color::White;
+        overlay.a = static_cast<std::uint8_t>(this->flash_time / FLASH_DURATION * 200);
+
+        target.drawRect(this->getPosition(), this->bounds, overlay);
+    }
 }
 
 void CBrick::reset() {}
@@ -117,6 +136,8 @@ void CBrick::settings()
 
 void CBrick::quit_life()
 {
+    this->flash_time = FLASH_DURATION;
+
     // A dry metallic cling tells the player at the first touch that
     // this brick cannot be broken.
     if (this->type == UNDESTROYABLE)
@@ -131,6 +152,11 @@ void CBrick::quit_life()
         this->lifes--;
         this->removable = this->lifes <= 0;
     }
+}
+
+bool CBrick::is_flashing() const
+{
+    return this->flash_time > 0;
 }
 
 bool CBrick::is_removable() const
