@@ -110,6 +110,8 @@ class CPlayState : public CState
     };
 
     void spawn_brick_particles(CBrick* brick);
+    // A small burst where the ball just bounced or a brick took a hit.
+    void spawn_impact_sparks(const engine::Vec2f& center, const engine::Color& color);
     void update_particles(const float dt);
     void render_particles();
 
@@ -190,6 +192,7 @@ class CPlayState : public CState
 
     static constexpr float PARTICLE_GRAVITY = 400.f;
     static constexpr unsigned int PARTICLES_PER_BRICK = 10;
+    static constexpr unsigned int SPARKS_PER_IMPACT = 4;
 
     static constexpr float PADDLE_DEATH_DURATION = 0.6f;
     static constexpr unsigned int PADDLE_DEATH_FRAMES = 5;

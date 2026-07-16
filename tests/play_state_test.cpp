@@ -541,6 +541,39 @@ TEST_F(PlayStateTest, ChippedBricksOnlyScoreWhenKilled)
     EXPECT_EQ(play_state->get_score(), 20u);
 }
 
+TEST_F(PlayStateTest, WallBounceThrowsSparks)
+{
+    play_state->get_bricks().clear();
+
+    launchBall({5.f, 300.f}, {-300.f, -50.f});
+
+    ASSERT_EQ(play_state->get_particle_count(), 0u);
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_GT(play_state->get_particle_count(), 0u);
+}
+
+TEST_F(PlayStateTest, ChippedBrickThrowsSparks)
+{
+    // Silver survives the first hit: no death burst, only chip sparks.
+    placeSingleBrick({200.f, 100.f}, game::game_bricks::SILVER);
+    launchBall({211.f, 80.f}, {0.f, 300.f});
+
+    ASSERT_EQ(play_state->get_particle_count(), 0u);
+
+    for (int i = 0; i < 5; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_EQ(play_state->get_bricks().size(), 1u);
+    EXPECT_GT(play_state->get_particle_count(), 0u);
+}
+
 TEST_F(PlayStateTest, GameOverKeepsTheHighScore)
 {
     placeSingleBrick({200.f, 100.f}, game::game_bricks::RED);

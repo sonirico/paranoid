@@ -245,6 +245,23 @@ void CPlayState::spawn_brick_particles(CBrick* brick)
     }
 }
 
+void CPlayState::spawn_impact_sparks(const engine::Vec2f& center, const engine::Color& color)
+{
+    for (unsigned int i = 0; i < SPARKS_PER_IMPACT; ++i)
+    {
+        const float angle = (std::rand() % 360) * 3.14159265f / 180.f;
+        const float speed = 40.f + std::rand() % 80;
+
+        Particle p;
+        p.pos = center;
+        p.vel = {std::cos(angle) * speed, std::sin(angle) * speed};
+        p.life = 0.15f + (std::rand() % 15) / 100.f;
+        p.color = color;
+
+        this->particles.push_back(p);
+    }
+}
+
 void CPlayState::update_particles(const float dt)
 {
     for (auto it = this->particles.begin(); it != this->particles.end();)
@@ -555,7 +572,22 @@ void CPlayState::update_balls(const float dt)
         }
         else
         {
+            const bool flying = !ball->is_in_paddle();
+            const engine::Vec2f v_before = ball->get_velocity();
+
             ball->update(dt);
+
+            // A flipped velocity axis means the ball just bounced off a
+            // wall or the paddle: throw sparks at the impact point.
+            const engine::Vec2f v_after = ball->get_velocity();
+
+            if (flying && !ball->is_removable() &&
+                (v_before.x * v_after.x < 0 || v_before.y * v_after.y < 0))
+            {
+                this->spawn_impact_sparks(ball->getPosition() + ball->get_size() * 0.5f,
+                                          {220, 220, 255, 255});
+            }
+
             ++it;
         }
     }
@@ -898,6 +930,15 @@ bool CPlayState::update_bricks(const float dt)
         {
             brick->quit_life();
             brick->play_animation();
+
+            // A brick that shrugs the hit off still sparks in its own
+            // color, so chipping silver/gold and bouncing off the
+            // indestructible ones reads at a glance.
+            if (!brick->is_removable())
+            {
+                this->spawn_impact_sparks(brick->getPosition() + brick->get_size() * 0.5f,
+                                          brick->get_color());
+            }
         }
     }
 
