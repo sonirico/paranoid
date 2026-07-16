@@ -27,7 +27,7 @@ class CBall : public CEntity
     bool is_in_paddle() const;
     bool is_removable() const;
 
-    // Draws the spin trail behind the sprite when the ball is curving.
+    // Draws the fading comet tail behind the sprite.
     void draw(engine::Window& target) const override;
 
     // Sweeps this tick's flight path against every brick, bouncing off
@@ -95,10 +95,11 @@ class CBall : public CEntity
     // Target speed (the velocity's magnitude): every bounce re-normalizes
     // the velocity to this, so the ball never slows down by hitting at an
     // angle. Ramps up on each paddle bounce until MAX_VEL.
-    float vel = 400;
-
+    static constexpr float BASE_VEL = 400.f;
     static constexpr float VEL_RAMP = 1.025f;
     static constexpr float MAX_VEL = 720.f;
+
+    float vel = BASE_VEL;
 
     // Spin imparted by a moving spin-mode paddle (bonus T); positive
     // curves clockwise on screen.
@@ -128,8 +129,8 @@ class CBall : public CEntity
     // A tick's flight path bounces off at most this many bricks.
     static constexpr unsigned int MAX_BRICK_BOUNCES = 3;
 
-    // Recent tick positions, oldest first; rendered as a fading trail
-    // while the ball carries enough spin to visibly curve.
+    // Recent tick positions, oldest first; rendered as a fading comet
+    // tail behind the flying ball, colored by the mode in effect.
     std::vector<engine::Vec2f> trail;
 
     static constexpr unsigned int TRAIL_LENGTH = 8;

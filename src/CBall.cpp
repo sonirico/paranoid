@@ -71,13 +71,31 @@ void CBall::update(const float dt)
 
 void CBall::draw(engine::Window& target) const
 {
-    // A curving ball leaves a comet tail: orange for clockwise spin,
-    // cyan for the other way, brighter the harder it spins.
-    if (std::abs(this->spin) > TRAIL_MIN_SPIN)
+    // Every flying ball leaves a comet tail that grows with the speed
+    // ramp. The mode recolors it: the megaball burns orange, the net
+    // ball glows cyan, and spin keeps its orange/cyan curve colors,
+    // brighter the harder it spins.
+    if (!this->trail.empty())
     {
-        const float intensity = std::min(1.f, std::abs(this->spin) / (MAX_SPIN / 2));
-        const engine::Color base =
-            this->spin > 0 ? engine::Color{255, 160, 40, 255} : engine::Color{80, 220, 255, 255};
+        engine::Color base{220, 220, 255, 255};
+        float intensity =
+            std::clamp(0.35f + 0.65f * (this->vel - BASE_VEL) / (MAX_VEL - BASE_VEL), 0.15f, 1.f);
+
+        if (this->pierce)
+        {
+            base = {255, 120, 30, 255};
+            intensity = 1.f;
+        }
+        else if (std::abs(this->spin) > TRAIL_MIN_SPIN)
+        {
+            base = this->spin > 0 ? engine::Color{255, 160, 40, 255}
+                                  : engine::Color{80, 220, 255, 255};
+            intensity = std::min(1.f, std::abs(this->spin) / (MAX_SPIN / 2));
+        }
+        else if (this->net)
+        {
+            base = {0, 220, 255, 255};
+        }
 
         for (unsigned int i = 0; i < this->trail.size(); ++i)
         {
