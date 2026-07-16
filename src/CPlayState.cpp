@@ -985,6 +985,13 @@ bool CPlayState::update_bricks(const float dt)
         // the render interpolation so nothing shivers while frozen.
         this->hitstop_time = HITSTOP_DURATION;
         this->snapshot_entities();
+
+        // Several bricks in one tick (a megaball plough, a tight
+        // carom) also kick the screen sideways for a moment.
+        if (killed >= 2)
+        {
+            this->start_shake(0.12f, 2.5f);
+        }
     }
 
     return false;
