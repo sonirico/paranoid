@@ -97,6 +97,7 @@ enum fx
     STICKY,
     SELECT,
     CLING,
+    POP,
     COUNT
 };
 };

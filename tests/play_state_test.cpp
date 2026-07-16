@@ -41,6 +41,7 @@ class PlayStateTest : public ::testing::Test
         holder->load(game::game_fx::STICKY, TEST_MEDIA_DIR "/fx/sticky.wav");
         holder->load(game::game_fx::SELECT, TEST_MEDIA_DIR "/fx/select.wav");
         holder->load(game::game_fx::CLING, TEST_MEDIA_DIR "/fx/cling.wav");
+        holder->load(game::game_fx::POP, TEST_MEDIA_DIR "/fx/pop.wav");
 
         music = std::make_unique<engine::Music>(*audio);
 

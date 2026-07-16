@@ -1111,7 +1111,7 @@ bool CPlayState::update_bricks(const float dt)
             this->high_score = std::max(this->high_score, this->score);
 
             this->gc->play_fx(
-                game::game_fx::POINTS,
+                game::game_fx::POP,
                 std::min(1.f + COMBO_PITCH_STEP * (this->combo - 1), COMBO_PITCH_MAX));
 
             if (mult > 1)
