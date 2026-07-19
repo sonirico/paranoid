@@ -11,6 +11,7 @@
 #include "assets.h"
 
 #include <cstddef>
+#include <limits>
 #include <list>
 #include <memory>
 #include <string>
@@ -149,8 +150,11 @@ class CPlayState : public CState
     // place of the paddle while it runs.
     void start_paddle_death();
 
-    // Each stage alternates between the two gameplay tracks.
+    // Starts the track the current stage drew from the pool.
     void play_stage_music();
+
+    // Draws a random track for the stage, never an immediate repeat.
+    void pick_stage_track();
 
     // Called when the last ball is lost; restarts the run at 0 lives.
     void lose_life();
@@ -194,6 +198,10 @@ class CPlayState : public CState
 
     static unsigned int current_stage;
     unsigned int total_bricks = 0;
+
+    // Index into the stage track pool for the current stage; the
+    // out-of-range start means the first draw excludes nothing.
+    std::size_t stage_track = std::numeric_limits<std::size_t>::max();
 
     static const unsigned int STARTING_LIVES = 3;
     unsigned int lives = STARTING_LIVES;

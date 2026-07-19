@@ -20,6 +20,17 @@
 using namespace game::game_states;
 using namespace game::game_bricks;
 
+namespace
+{
+// The gameplay music pool; every stage draws one of these at random.
+const char* const STAGE_TRACKS[] = {
+    "media/music/crystalhammer.ogg",  "media/music/arkanoid.ogg",
+    "media/music/amiga_euphorie.ogg", "media/music/bst_7str.ogg",
+    "media/music/iyarms.ogg",         "media/music/mangotetris.ogg",
+    "media/music/tetrisduel.ogg",     "media/music/tetrismusicb.ogg",
+};
+} // namespace
+
 unsigned int CPlayState::current_stage;
 
 CPlayState::CPlayState(CGameContainer* gc)
@@ -51,15 +62,22 @@ void CPlayState::init()
 
 void CPlayState::play_stage_music()
 {
-    // Each stage picks the next background from the rotation.
-    const char* tracks[] = {
-        "media/music/crystalhammer.ogg",  "media/music/arkanoid.ogg",
-        "media/music/amiga_euphorie.ogg", "media/music/bst_7str.ogg",
-        "media/music/iyarms.ogg",         "media/music/mangotetris.ogg",
-        "media/music/tetrisduel.ogg",     "media/music/tetrismusicb.ogg",
-    };
+    // Asking for the playing track again (respawns) is a no-op, so the
+    // music only changes when a new stage drew a new one.
+    this->gc->play_music(STAGE_TRACKS[this->stage_track], true);
+}
 
-    this->gc->play_music(tracks[current_stage % std::size(tracks)], true);
+void CPlayState::pick_stage_track()
+{
+    std::size_t pick = std::rand() % std::size(STAGE_TRACKS);
+
+    // Re-roll instead of repeating what the previous stage played.
+    while (std::size(STAGE_TRACKS) > 1 && pick == this->stage_track)
+    {
+        pick = std::rand() % std::size(STAGE_TRACKS);
+    }
+
+    this->stage_track = pick;
 }
 
 void CPlayState::enter_intro(bool show_round)
@@ -71,6 +89,9 @@ void CPlayState::enter_intro(bool show_round)
 
     if (show_round)
     {
+        // Entering a stage draws its background track for later.
+        this->pick_stage_track();
+
         // Stage starts open on the round jingle, played once; the card
         // yields to gameplay just before the jingle's quiet tail, so the
         // wait stays snappy. Without a jingle (tests) use the fixed
