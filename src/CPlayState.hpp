@@ -5,6 +5,7 @@
 #include "CBrick.hpp"
 #include "CLaser.hpp"
 #include "CMenu.hpp"
+#include "CMeteor.hpp"
 #include "CPaddle.hpp"
 #include "CState.hpp"
 #include "assets.h"
@@ -57,6 +58,7 @@ class CPlayState : public CState
     std::list<std::unique_ptr<CBrick>>& get_bricks();
     std::list<std::unique_ptr<CLaser>>& get_lasers();
     CPaddle* get_paddle();
+    CMeteor* get_meteor();
 
     // The paddle-mode capsule currently in effect (COUNT means none).
     game::game_bonus::bonus get_active_bonus() const;
@@ -166,12 +168,22 @@ class CPlayState : public CState
     void update_lasers(const float dt);
     void render_lasers();
 
+    // Launches a meteor at the first stalled ball, steers the one in
+    // flight and knocks any ball it strikes downward.
+    void update_meteor(const float dt);
+    void render_meteor();
+
     std::unique_ptr<CPaddle> paddle;
 
     std::list<std::unique_ptr<CBall>> balls;
     std::list<std::unique_ptr<CBrick>> bricks;
     std::list<std::unique_ptr<CBonus>> bonus;
     std::list<std::unique_ptr<CLaser>> lasers;
+
+    // The anti-stall rock, one at most in flight, and the ball it
+    // falls toward; null once that ball is gone or was struck.
+    CMeteor meteor;
+    CBall* meteor_target = nullptr;
 
     bool fire_was_down = false;
 
@@ -200,6 +212,10 @@ class CPlayState : public CState
     // impact reads harder.
     static constexpr float HITSTOP_DURATION = 0.05f;
     float hitstop_time = 0;
+
+    // A meteor strike freezes far longer than a brick pop: enough to
+    // take the redirect in, short enough to leave the ball reachable.
+    static constexpr float METEOR_HITSTOP_DURATION = 0.6f;
 
     // Kills in the current combo run; every COMBO_KILLS_PER_MULT of
     // them raise the score multiplier by one and sharpen the kill pop.

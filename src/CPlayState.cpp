@@ -209,6 +209,17 @@ int CPlayState::update(const float dt)
         return NULLSTATE;
     }
 
+    // A meteor in flight holds the whole world still: with the ball
+    // pinned it cannot miss, and the strike's hit-stop then eases the
+    // player back into the rally.
+    if (this->meteor.is_active())
+    {
+        this->snapshot_entities();
+        this->update_meteor(dt);
+
+        return NULLSTATE;
+    }
+
     this->snapshot_entities();
 
     this->update_paddle(dt);
@@ -224,6 +235,7 @@ int CPlayState::update(const float dt)
     }
 
     this->update_lasers(dt);
+    this->update_meteor(dt);
     this->update_active_bonus(dt);
     this->update_particles(dt);
     this->update_floating_texts(dt);
@@ -411,6 +423,7 @@ void CPlayState::render()
     this->render_particles();
     this->render_floating_texts();
     this->render_lasers();
+    this->render_meteor();
     this->render_lives();
     this->render_active_bonus();
     this->render_score();
@@ -698,6 +711,12 @@ void CPlayState::update_balls(const float dt)
 
         if (ball->is_removable())
         {
+            // A meteor chasing this ball keeps falling, just unguided.
+            if (ball == this->meteor_target)
+            {
+                this->meteor_target = nullptr;
+            }
+
             it = this->balls.erase(it);
         }
         else
@@ -742,6 +761,10 @@ void CPlayState::lose_life()
     // Death drops the mode capsule and its countdown, like in the
     // arcade original.
     this->cancel_active_bonus();
+
+    // No ball left to rescue.
+    this->meteor.expire();
+    this->meteor_target = nullptr;
 
     this->gc->play_fx(game::game_fx::MUERTE);
 
@@ -1038,6 +1061,7 @@ void CPlayState::fire_lasers()
 
 void CPlayState::update_lasers(const float dt)
 {
+
     for (auto it = this->lasers.begin(); it != this->lasers.end();)
     {
         CLaser* laser = it->get();
@@ -1064,6 +1088,78 @@ void CPlayState::update_lasers(const float dt)
 
         ++it;
     }
+}
+
+void CPlayState::update_meteor(const float dt)
+{
+    if (!this->meteor.is_active())
+    {
+        // Only a lone ball earns the rescue: with several in the air
+        // the wait is worth it.
+        if (this->balls.size() != 1 || !this->balls.front()->is_stalled())
+        {
+            return;
+        }
+
+        CBall* ball = this->balls.front().get();
+
+        this->meteor_target = ball;
+        this->meteor.launch(ball->getPosition() + ball->get_size() * 0.5f);
+
+        this->gc->play_fx(game::game_fx::CLING, 0.8f);
+    }
+
+    // A caught (sticky) target parks on the paddle; stop chasing it.
+    const bool has_target = this->meteor_target != nullptr && !this->meteor_target->is_in_paddle();
+    const engine::Vec2f target =
+        has_target ? this->meteor_target->getPosition() + this->meteor_target->get_size() * 0.5f
+                   : engine::Vec2f{};
+
+    this->meteor.update(dt, target, has_target);
+
+    for (auto& ball : this->balls)
+    {
+        if (ball->is_in_paddle() || !this->meteor.overlaps(ball->getPosition(), ball->get_size()))
+        {
+            continue;
+        }
+
+        // Like a road crash: the ball comes out dazed, staggering
+        // slowly down toward the paddle instead of rocketing away.
+        ball->daze();
+
+        const engine::Vec2f center = ball->getPosition() + ball->get_size() * 0.5f;
+        const engine::Color fire{255, 140, 40, 255};
+
+        this->spawn_pickup_burst(center, fire);
+        this->spawn_floating_text("METEOR!", center + engine::Vec2f{0.f, -20.f}, fire);
+
+        this->gc->play_fx(game::game_fx::POP, 0.7f);
+
+        if (this->gc->starfield != nullptr)
+        {
+            this->gc->starfield->pulse(0.5f);
+        }
+
+        // Freeze the moment so the strike reads, then hand the player
+        // a ball they can still chase.
+        this->hitstop_time = METEOR_HITSTOP_DURATION;
+
+        this->meteor.expire();
+        this->meteor_target = nullptr;
+
+        break;
+    }
+
+    if (!this->meteor.is_active())
+    {
+        this->meteor_target = nullptr;
+    }
+}
+
+void CPlayState::render_meteor()
+{
+    this->meteor.draw(*this->gc->window);
 }
 
 bool CPlayState::update_bricks(const float dt)
@@ -1276,6 +1372,9 @@ void CPlayState::next_stage()
     this->balls.clear();
     this->bonus.clear();
 
+    this->meteor.expire();
+    this->meteor_target = nullptr;
+
     // A new stage starts clean: no leftover mode or stale countdown.
     this->cancel_active_bonus();
 
@@ -1401,4 +1500,9 @@ std::list<std::unique_ptr<CLaser>>& CPlayState::get_lasers()
 CPaddle* CPlayState::get_paddle()
 {
     return this->paddle.get();
+}
+
+CMeteor* CPlayState::get_meteor()
+{
+    return &this->meteor;
 }

@@ -122,6 +122,34 @@ class PlayStateTest : public ::testing::Test
         return ball;
     }
 
+    // Stalls the lone ball on a flat rally until a meteor strikes it;
+    // returns the ball right after the hit, or null if none ever came.
+    CBall* runUntilMeteorStrike()
+    {
+        play_state->get_bricks().clear();
+
+        CBall* ball = launchBall({400.f, 150.f}, {400.f, 0.f});
+
+        // Missed passes relaunch, so this only ends on the strike.
+        bool was_active = false;
+
+        for (unsigned int i = 0; i < game::FRAMES * 12; ++i)
+        {
+            play_state->update(game::TIME_PER_FRAME);
+
+            if (play_state->get_meteor()->is_active())
+            {
+                was_active = true;
+            }
+            else if (was_active)
+            {
+                return ball;
+            }
+        }
+
+        return nullptr;
+    }
+
     std::unique_ptr<engine::Window> window;
     std::unique_ptr<engine::AudioDevice> audio;
     std::unique_ptr<engine::Music> music;
@@ -793,6 +821,12 @@ TEST_F(PlayStateTest, SlowBonusWearsOffRestoringTheBaseSpeed)
     // only bounces off side walls, so its speed stays observable.
     CBall* ball = launchBall({400.f, 400.f}, {300.f, 0.f});
 
+    // A second ball parked on the paddle keeps the anti-stall meteor
+    // from cutting the observation short.
+    auto second = std::make_unique<CBall>(play_state.get(), play_state->get_paddle());
+    second->set_in_paddle();
+    play_state->get_balls().push_back(std::move(second));
+
     play_state->apply_bonus(game::game_bonus::S);
 
     ASSERT_NEAR(ball->get_velocity().length(), 210.f, 1.f);
@@ -858,4 +892,177 @@ TEST_F(PlayStateTest, LasersFlyUpAndExpireOffScreen)
     }
 
     EXPECT_TRUE(play_state->get_lasers().empty());
+}
+
+TEST_F(PlayStateTest, MeteorFallsOnABallStalledFlat)
+{
+    play_state->get_bricks().clear();
+
+    // A perfectly horizontal rally: the ball never comes down on its own.
+    launchBall({400.f, 150.f}, {400.f, 0.f});
+
+    // Just short of the stall threshold there is no meteor yet.
+    const unsigned int almost = static_cast<unsigned int>(CBall::STALL_TIME * game::FRAMES) - 10;
+
+    for (unsigned int i = 0; i < almost; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_FALSE(play_state->get_meteor()->is_active());
+
+    for (unsigned int i = 0; i < 20; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_TRUE(play_state->get_meteor()->is_active());
+}
+
+TEST_F(PlayStateTest, MeteorCrashLeavesTheBallDazedDriftingDown)
+{
+    CBall* ball = runUntilMeteorStrike();
+
+    ASSERT_NE(ball, nullptr);
+
+    // Like a road crash: the ball staggers slowly downward instead of
+    // rocketing away at flight speed.
+    EXPECT_TRUE(ball->is_dazed());
+
+    const engine::Vec2f velocity = ball->get_velocity();
+
+    EXPECT_GT(velocity.y, 0.f);
+    EXPECT_LT(velocity.length(), 200.f);
+}
+
+TEST_F(PlayStateTest, DazedBallRecoversItsSpeedOnThePaddle)
+{
+    CBall* ball = runUntilMeteorStrike();
+
+    ASSERT_NE(ball, nullptr);
+
+    // Park the dazed drop right over the paddle so it lands on it.
+    CPaddle* paddle = play_state->get_paddle();
+
+    ball->setPosition(paddle->getPosition().x + paddle->get_size().x / 2, 420.f);
+
+    // The bounce shakes the daze off and restores the pre-crash speed,
+    // paddle ramp included.
+    bool bounced = false;
+
+    for (unsigned int i = 0; i < game::FRAMES * 10 && !bounced; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+
+        bounced = !play_state->get_balls().empty() &&
+                  play_state->get_balls().front().get() == ball && ball->get_velocity().y < 0;
+    }
+
+    ASSERT_TRUE(bounced);
+    EXPECT_FALSE(ball->is_dazed());
+    EXPECT_NEAR(ball->get_velocity().length(), 410.f, 1.f);
+}
+
+TEST_F(PlayStateTest, MeteorSparesAFlatBallAlreadyDroppingIn)
+{
+    play_state->get_bricks().clear();
+
+    // Flat but sinking: it reaches the floor on its own within seconds,
+    // so no rescue is called even though the angle stays shallow.
+    launchBall({400.f, 0.f}, {391.9f, 80.f});
+
+    for (unsigned int i = 0; i < game::FRAMES * 7; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+
+        ASSERT_FALSE(play_state->get_meteor()->is_active());
+    }
+}
+
+TEST_F(PlayStateTest, MeteorOnlyRescuesALoneBall)
+{
+    play_state->get_bricks().clear();
+
+    launchBall({400.f, 150.f}, {400.f, 0.f});
+
+    // A second ball parked on the paddle keeps the meteor away.
+    auto second = std::make_unique<CBall>(play_state.get(), play_state->get_paddle());
+    second->set_in_paddle();
+    play_state->get_balls().push_back(std::move(second));
+
+    const unsigned int beyond =
+        static_cast<unsigned int>(CBall::STALL_TIME * game::FRAMES) + game::FRAMES;
+
+    for (unsigned int i = 0; i < beyond; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+
+        ASSERT_FALSE(play_state->get_meteor()->is_active());
+    }
+
+    // Losing the extra ball leaves a lone stalled one: the rescue comes.
+    CBall* extra = play_state->get_balls().back().get();
+    extra->set_in_paddle(false);
+    extra->setPosition(400.f, game::HEIGHT + 50.f);
+
+    for (unsigned int i = 0; i < 20; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_TRUE(play_state->get_meteor()->is_active());
+}
+
+TEST_F(PlayStateTest, MeteorFlightFreezesTheBallUntilTheStrike)
+{
+    play_state->get_bricks().clear();
+
+    CBall* ball = launchBall({400.f, 150.f}, {400.f, 0.f});
+
+    for (unsigned int i = 0; i < game::FRAMES * 8 && !play_state->get_meteor()->is_active(); ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    ASSERT_TRUE(play_state->get_meteor()->is_active());
+
+    // The world holds still for the whole flight, so the meteor cannot
+    // miss; with the ball pinned, the strike must land within seconds.
+    const engine::Vec2f held = ball->getPosition();
+
+    for (unsigned int i = 0; i < game::FRAMES * 4 && play_state->get_meteor()->is_active(); ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+
+        ASSERT_FLOAT_EQ(ball->getPosition().x, held.x);
+        ASSERT_FLOAT_EQ(ball->getPosition().y, held.y);
+    }
+
+    EXPECT_FALSE(play_state->get_meteor()->is_active());
+}
+
+TEST_F(PlayStateTest, MeteorStrikeFreezesTheGameBriefly)
+{
+    CBall* ball = runUntilMeteorStrike();
+
+    ASSERT_NE(ball, nullptr);
+
+    // The hit-stop holds the ball where it was struck...
+    const engine::Vec2f frozen = ball->getPosition();
+
+    for (unsigned int i = 0; i < 18; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_FLOAT_EQ(ball->getPosition().x, frozen.x);
+    EXPECT_FLOAT_EQ(ball->getPosition().y, frozen.y);
+
+    // ...and hands back a moving ball once it wears off.
+    for (unsigned int i = 0; i < 30; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    EXPECT_NE(ball->getPosition().y, frozen.y);
 }

@@ -27,6 +27,20 @@ class CBall : public CEntity
     bool is_in_paddle() const;
     bool is_removable() const;
 
+    // True once the ball has flown near-horizontally for STALL_TIME
+    // without touching the paddle; the play state calls a meteor down
+    // on it. Paddle bounces and external redirects reset the clock.
+    bool is_stalled() const;
+
+    // Meteor crash: the ball staggers slowly and erratically down
+    // toward the paddle until the daze wears off (or the paddle bounces
+    // it), then resumes at its pre-crash speed.
+    void daze();
+    bool is_dazed() const;
+
+    // How long the flight may stay flat before counting as stalled.
+    static constexpr float STALL_TIME = 6.f;
+
     // Draws the fading comet tail behind the sprite.
     void draw(engine::Window& target) const override;
 
@@ -128,6 +142,35 @@ class CBall : public CEntity
 
     // A tick's flight path bounces off at most this many bricks.
     static constexpr unsigned int MAX_BRICK_BOUNCES = 3;
+
+    // Seconds the flight has stayed flatter than STALL_RATIO; wall and
+    // brick bounces preserve the angle, so only the paddle (or a
+    // meteor's redirect) can wind it back to zero.
+    float stall_time = 0;
+
+    // |vy| below this fraction of the speed counts as flying flat: just
+    // above the widest paddle bounce (~0.39), so even an edge shot that
+    // rallies too long eventually calls the meteor.
+    static constexpr float STALL_RATIO = 0.45f;
+
+    // A flat ball already dropping onto the field within this many
+    // seconds is coming to the player, not stalled.
+    static constexpr float DESCENT_GRACE = 4.f;
+
+    // Whether the ball is sinking and reaches the floor within the
+    // descent grace.
+    bool on_final_approach() const;
+
+    // Drives the dazed wobble and ends it when the timer runs out.
+    void apply_daze(const float dt);
+
+    // Seconds of daze left, and the sway wave's running angle.
+    float daze_time = 0;
+    float daze_phase = 0;
+
+    static constexpr float DAZE_DURATION = 6.f;
+    static constexpr float DAZE_SPEED = 120.f; // A crawl next to BASE_VEL.
+    static constexpr float DAZE_SWAY = 0.8f;   // Lateral wobble amplitude.
 
     // Recent tick positions, oldest first; rendered as a fading comet
     // tail behind the flying ball, colored by the mode in effect.

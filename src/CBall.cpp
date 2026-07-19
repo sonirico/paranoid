@@ -49,12 +49,30 @@ void CBall::update(const float dt)
     {
         this->follow_paddle();
         this->trail.clear();
+        this->stall_time = 0;
     }
     else
     {
         this->tick_start_pos = this->getPosition();
 
-        this->apply_magnus(dt);
+        if (this->daze_time > 0)
+        {
+            this->apply_daze(dt);
+        }
+        else
+        {
+            if (std::abs(this->velocity.y) < STALL_RATIO * this->vel && !this->on_final_approach())
+            {
+                this->stall_time += dt;
+            }
+            else
+            {
+                this->stall_time = 0;
+            }
+
+            this->apply_magnus(dt);
+        }
+
         this->move(this->velocity * dt);
         this->collision_ball_paddle();
 
@@ -297,6 +315,11 @@ void CBall::collision_ball_paddle()
     engine::Vec2f direction{radians * dir, -(1 - radians)};
     this->velocity = direction.normalized() * this->vel;
 
+    // The player reached the ball: the rally is alive, however flat
+    // this bounce leaves it, and any daze is shaken off.
+    this->stall_time = 0;
+    this->daze_time = 0;
+
     // A moving spin-mode paddle (bonus T) cuts the ball (Magnus effect).
     if (this->paddle->has_spin() && this->paddle->dir != 0)
     {
@@ -505,6 +528,54 @@ bool CBall::is_removable() const
     return this->removable;
 }
 
+bool CBall::is_stalled() const
+{
+    return this->stall_time >= STALL_TIME;
+}
+
+bool CBall::on_final_approach() const
+{
+    return this->velocity.y > 0 &&
+           (game::HEIGHT - this->getPosition().y) / this->velocity.y <= DESCENT_GRACE;
+}
+
+void CBall::daze()
+{
+    this->daze_time = DAZE_DURATION;
+    this->daze_phase = (std::rand() % 628) / 100.f;
+
+    this->spin = 0;
+    this->stall_time = 0;
+
+    // Start the staggered drop straight down; apply_daze keeps it
+    // wandering from here. The pre-crash speed stays in vel for later.
+    this->velocity = engine::Vec2f{0.f, 1.f} * DAZE_SPEED;
+}
+
+bool CBall::is_dazed() const
+{
+    return this->daze_time > 0;
+}
+
+void CBall::apply_daze(const float dt)
+{
+    this->daze_time -= dt;
+
+    if (this->daze_time <= 0)
+    {
+        // Shaken off mid-air: resume the pre-crash speed on the spot.
+        this->velocity = this->velocity.normalized() * this->vel;
+        return;
+    }
+
+    // Drunken drop: the sideways sway wanders at an uneven pace.
+    this->daze_phase += (4.f + (std::rand() % 100) / 25.f) * dt;
+
+    const float sway = std::sin(this->daze_phase) * DAZE_SWAY;
+
+    this->velocity = engine::Vec2f{sway, 1.f}.normalized() * DAZE_SPEED;
+}
+
 void CBall::set_pierce(bool b)
 {
     this->pierce = b;
@@ -521,6 +592,10 @@ void CBall::set_velocity(const engine::Vec2f& v)
     // Keep the target speed in sync so the next bounce or Magnus
     // renormalization doesn't snap the ball back to its previous speed.
     this->vel = v.length();
+
+    // An external redirect (serve, capsule) starts a fresh rally.
+    this->stall_time = 0;
+    this->daze_time = 0;
 }
 
 void CBall::scale_velocity(float factor)

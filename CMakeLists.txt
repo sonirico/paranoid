@@ -79,6 +79,7 @@ add_library(paranoid_game STATIC
     src/CMapState.cpp
     src/CMenu.cpp
     src/CMenuState.cpp
+    src/CMeteor.cpp
     src/CPaddle.cpp
     src/CPlayState.cpp
     src/CResourceHolder.cpp
