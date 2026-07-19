@@ -1067,6 +1067,13 @@ void CPlayState::cancel_active_bonus()
 
 void CPlayState::fire_lasers()
 {
+    if (this->laser_cooldown > 0)
+    {
+        return;
+    }
+
+    this->laser_cooldown = LASER_COOLDOWN;
+
     const engine::Vec2f p_pos = this->paddle->getPosition();
     const engine::Vec2f p_size = this->paddle->get_size();
 
@@ -1076,12 +1083,26 @@ void CPlayState::fire_lasers()
     auto right = std::make_unique<CLaser>(this);
     right->setPosition(p_pos.x + p_size.x - right->get_size().x, p_pos.y - right->get_size().y);
 
+    // Muzzle flash on both guns, a zap and a kick of recoil.
+    const engine::Color flash{255, 90, 40, 255};
+
+    this->spawn_impact_sparks(left->getPosition() + left->get_size() * 0.5f, flash);
+    this->spawn_impact_sparks(right->getPosition() + right->get_size() * 0.5f, flash);
+
+    this->gc->play_fx(game::game_fx::CLING, 1.5f);
+
+    this->start_shake(0.06f, 1.5f);
+
     this->lasers.push_back(std::move(left));
     this->lasers.push_back(std::move(right));
 }
 
 void CPlayState::update_lasers(const float dt)
 {
+    if (this->laser_cooldown > 0)
+    {
+        this->laser_cooldown -= dt;
+    }
 
     for (auto it = this->lasers.begin(); it != this->lasers.end();)
     {

@@ -880,6 +880,30 @@ TEST_F(PlayStateTest, LaserBonusArmsPaddleAndFiresPairs)
     EXPECT_EQ(play_state->get_lasers().size(), 2u);
 }
 
+TEST_F(PlayStateTest, LaserVolleysAreRateLimited)
+{
+    play_state->get_bricks().clear();
+    play_state->apply_bonus(game::game_bonus::L);
+
+    play_state->fire_lasers();
+    play_state->fire_lasers();
+
+    // The second pull lands inside the cooldown: no extra shots.
+    EXPECT_EQ(play_state->get_lasers().size(), 2u);
+
+    const int ticks = static_cast<int>(CPlayState::LASER_COOLDOWN * game::FRAMES) + 1;
+
+    for (int i = 0; i < ticks; ++i)
+    {
+        play_state->update(game::TIME_PER_FRAME);
+    }
+
+    // Once the cooldown elapses, the guns answer again.
+    play_state->fire_lasers();
+
+    EXPECT_EQ(play_state->get_lasers().size(), 4u);
+}
+
 TEST_F(PlayStateTest, LasersFlyUpAndExpireOffScreen)
 {
     play_state->apply_bonus(game::game_bonus::L);

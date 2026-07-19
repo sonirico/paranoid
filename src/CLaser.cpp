@@ -1,6 +1,6 @@
 #include "CLaser.hpp"
 
-#include "CResourceHolder.hpp"
+#include "engine/Window.hpp"
 
 CLaser::CLaser(CState* st)
 {
@@ -13,18 +13,8 @@ void CLaser::init()
 {
     this->velocity = engine::Vec2f{0, -600};
 
-    this->scale(this->scalation);
-
-    // Reuses the ball frame as the projectile sprite.
-    this->animation.setSpriteSheet(this->state->rh->get(game::game_textures::MAIN));
-    this->animation.addFrame({64, 16, 5, 4});
-    this->current_animation = &this->animation;
-
-    this->animated_sprite = engine::AnimatedSprite(-1.f, true, false);
-    this->animated_sprite.play(this->animation);
-
-    this->bounds.x = this->animated_sprite.getLocalBounds().width * this->scalation.x;
-    this->bounds.y = this->animated_sprite.getLocalBounds().height * this->scalation.y;
+    // The bolt is pure primitives; its size doubles as the hitbox.
+    this->bounds = {4.f, 18.f};
 }
 
 void CLaser::update(const float dt)
@@ -38,6 +28,33 @@ void CLaser::update(const float dt)
 }
 
 void CLaser::reset() {}
+
+void CLaser::draw(engine::Window& target) const
+{
+    // Interpolated like sprite entities, so the fast bolt stays smooth.
+    engine::Vec2f pos = this->getPosition();
+
+    if (this->has_prev_position)
+    {
+        pos = this->prev_position + (pos - this->prev_position) * target.getFrameAlpha();
+    }
+
+    // A red casing around a white-hot core...
+    target.drawRect(pos - engine::Vec2f{1.f, 1.f}, {this->bounds.x + 2.f, this->bounds.y + 2.f},
+                    {255, 60, 30, 110});
+    target.drawRect(pos, this->bounds, {255, 120, 50, 255});
+    target.drawRect(pos + engine::Vec2f{1.f, 2.f}, {this->bounds.x - 2.f, this->bounds.y - 6.f},
+                    {255, 235, 170, 255});
+
+    // ...trailing a short wake that fades behind the climb.
+    for (int i = 1; i <= 3; ++i)
+    {
+        engine::Color wake{255, 90, 40, static_cast<std::uint8_t>(120 - i * 35)};
+
+        target.drawRect(pos + engine::Vec2f{0.f, this->bounds.y + i * 5.f}, {this->bounds.x, 4.f},
+                        wake);
+    }
+}
 
 bool CLaser::collision_laser_brick(CBrick* b)
 {

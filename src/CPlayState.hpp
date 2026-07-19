@@ -73,6 +73,9 @@ class CPlayState : public CState
     // How long a mode capsule stays in effect before wearing off.
     static constexpr float BONUS_DURATION = 10.f;
 
+    // Minimum pause between laser volleys, however fast the trigger.
+    static constexpr float LASER_COOLDOWN = 0.4f;
+
     // Fallback length of the round card when no jingle could load; with
     // one, the card lasts the jingle plus a quarter-second beat.
     static constexpr float ROUND_INTRO_DURATION = 4.f;
@@ -183,6 +186,9 @@ class CPlayState : public CState
     std::list<std::unique_ptr<CBrick>> bricks;
     std::list<std::unique_ptr<CBonus>> bonus;
     std::list<std::unique_ptr<CLaser>> lasers;
+
+    // Seconds until the guns may fire the next volley.
+    float laser_cooldown = 0;
 
     // The anti-stall rock, one at most in flight, and the ball it
     // falls toward; null once that ball is gone or was struck.
