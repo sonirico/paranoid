@@ -98,6 +98,7 @@ enum fx
     SELECT,
     CLING,
     POP,
+    LASER,
     COUNT
 };
 };

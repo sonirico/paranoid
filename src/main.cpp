@@ -38,6 +38,7 @@ void load_resources(CResourceHolder& rh)
     rh.load(SELECT, "media/fx/select.wav");
     rh.load(CLING, "media/fx/cling.wav");
     rh.load(POP, "media/fx/pop.wav");
+    rh.load(LASER, "media/fx/laser.wav");
 }
 } // namespace
 

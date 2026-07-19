@@ -14,7 +14,7 @@ CGameContainer::CGameContainer(engine::Window* window, engine::AudioDevice* audi
       current_sound{engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
                     engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
                     engine::Sound(*audio), engine::Sound(*audio), engine::Sound(*audio),
-                    engine::Sound(*audio)},
+                    engine::Sound(*audio), engine::Sound(*audio)},
       music(music)
 {
     for (int i = 0; i < game::game_fx::COUNT; ++i)

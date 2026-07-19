@@ -43,6 +43,7 @@ class GameSmokeTest : public ::testing::Test
         holder->load(game::game_fx::SELECT, TEST_MEDIA_DIR "/fx/select.wav");
         holder->load(game::game_fx::CLING, TEST_MEDIA_DIR "/fx/cling.wav");
         holder->load(game::game_fx::POP, TEST_MEDIA_DIR "/fx/pop.wav");
+        holder->load(game::game_fx::LASER, TEST_MEDIA_DIR "/fx/laser.wav");
 
         music = std::make_unique<engine::Music>(*audio);
 
