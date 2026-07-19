@@ -5,8 +5,11 @@
 #include "engine/Vec2.hpp"
 
 #include <string>
+#include <vector>
 
 struct SDL_Renderer;
+struct SDL_Texture;
+struct SDL_Vertex;
 struct SDL_Window;
 
 namespace engine
@@ -39,6 +42,11 @@ class Window
     void setScaleMode(ScaleMode mode);
     ScaleMode getScaleMode() const;
 
+    // Old-tube look: the scene renders to a texture that display() maps
+    // onto a barrel-curved mesh with scanlines and a corner vignette.
+    void setCrtFilter(bool enabled);
+    bool isCrtFilter() const;
+
     // The cursor in game coordinates, regardless of window size,
     // fullscreen or letterbox bars.
     Vec2f getMousePosition() const;
@@ -65,6 +73,12 @@ class Window
     SDL_Renderer* getRenderer() const;
 
   private:
+    // Lazily builds the scene target, the scanline overlay and the
+    // warped mesh; false (and the filter stays off) when the renderer
+    // cannot provide them.
+    bool createCrtResources();
+    void destroyCrtResources();
+
     SDL_Window* m_window = nullptr;
     SDL_Renderer* m_renderer = nullptr;
     bool m_open = false;
@@ -74,6 +88,32 @@ class Window
     int m_height = 0;
     bool m_fullscreen = false;
     ScaleMode m_scale_mode = ScaleMode::Letterbox;
+
+    bool m_crt = false;
+
+    // Offscreen target the whole scene renders into while the filter
+    // is on, and the scanline texture blended over it before warping.
+    SDL_Texture* m_crt_scene = nullptr;
+    SDL_Texture* m_crt_scanlines = nullptr;
+
+    // The barrel-curved grid the scene texture is mapped onto, with the
+    // vignette baked into its vertex colors. Built once.
+    std::vector<SDL_Vertex> m_crt_mesh;
+    std::vector<int> m_crt_indices;
+
+    static constexpr int CRT_MESH_COLS = 32;
+    static constexpr int CRT_MESH_ROWS = 24;
+
+    // How hard the tube bulges: corners are pulled in by roughly this
+    // fraction while the edge midpoints stay on the border.
+    static constexpr float CRT_CURVATURE = 0.045f;
+
+    // Fraction of the brightness lost at the very corners.
+    static constexpr float CRT_VIGNETTE = 0.5f;
+
+    // One dark row this often, and how opaque it is.
+    static constexpr int CRT_SCANLINE_PERIOD = 3;
+    static constexpr std::uint8_t CRT_SCANLINE_ALPHA = 100;
 };
 
 } // namespace engine

@@ -41,3 +41,29 @@ TEST_F(WindowTest, ScaleModeCanBeSwitchedToStretchAndBack)
     window->setScaleMode(engine::Window::ScaleMode::Letterbox);
     EXPECT_EQ(window->getScaleMode(), engine::Window::ScaleMode::Letterbox);
 }
+
+TEST_F(WindowTest, CrtFilterStartsDisabled)
+{
+    EXPECT_FALSE(window->isCrtFilter());
+}
+
+TEST_F(WindowTest, CrtFilterCanBeToggled)
+{
+    window->setCrtFilter(true);
+    EXPECT_TRUE(window->isCrtFilter());
+
+    window->setCrtFilter(false);
+    EXPECT_FALSE(window->isCrtFilter());
+}
+
+TEST_F(WindowTest, CrtFilterRendersAFrame)
+{
+    window->setCrtFilter(true);
+    ASSERT_TRUE(window->isCrtFilter());
+
+    // Runs the offscreen scene through the warp compositor; SDL errors
+    // would surface through the render calls' logs and a crash here.
+    window->clear();
+    window->drawRect({10.f, 10.f}, {50.f, 50.f}, engine::Color::White);
+    window->display();
+}

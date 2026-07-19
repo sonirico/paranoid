@@ -2,6 +2,8 @@
 
 #include <SDL3/SDL.h>
 
+#include <cmath>
+
 namespace engine
 {
 
@@ -28,6 +30,8 @@ Window::Window(const std::string& title, int width, int height) : m_width(width)
 
 Window::~Window()
 {
+    destroyCrtResources();
+
     if (m_renderer)
     {
         SDL_DestroyRenderer(m_renderer);
@@ -78,6 +82,131 @@ Window::ScaleMode Window::getScaleMode() const
     return m_scale_mode;
 }
 
+void Window::setCrtFilter(bool enabled)
+{
+    if (enabled && m_crt_scene == nullptr && !createCrtResources())
+    {
+        return;
+    }
+
+    m_crt = enabled;
+}
+
+bool Window::isCrtFilter() const
+{
+    return m_crt;
+}
+
+bool Window::createCrtResources()
+{
+    m_crt_scene = SDL_CreateTexture(m_renderer, SDL_PIXELFORMAT_RGBA32, SDL_TEXTUREACCESS_TARGET,
+                                    m_width, m_height);
+
+    if (m_crt_scene == nullptr)
+    {
+        SDL_Log("CRT scene target failed: %s", SDL_GetError());
+        return false;
+    }
+
+    // Linear sampling smooths the texels the barrel warp shifts around.
+    SDL_SetTextureScaleMode(m_crt_scene, SDL_SCALEMODE_LINEAR);
+
+    // A one-pixel-wide column with a dark row every few lines; drawing
+    // it stretched over the scene gives the horizontal scanlines.
+    SDL_Surface* scanlines = SDL_CreateSurface(1, m_height, SDL_PIXELFORMAT_RGBA32);
+
+    if (scanlines == nullptr)
+    {
+        SDL_Log("CRT scanline surface failed: %s", SDL_GetError());
+        destroyCrtResources();
+        return false;
+    }
+
+    SDL_FillSurfaceRect(scanlines, nullptr, SDL_MapSurfaceRGBA(scanlines, 0, 0, 0, 0));
+
+    for (int y = CRT_SCANLINE_PERIOD - 1; y < m_height; y += CRT_SCANLINE_PERIOD)
+    {
+        const SDL_Rect row{0, y, 1, 1};
+
+        SDL_FillSurfaceRect(scanlines, &row,
+                            SDL_MapSurfaceRGBA(scanlines, 0, 0, 0, CRT_SCANLINE_ALPHA));
+    }
+
+    m_crt_scanlines = SDL_CreateTextureFromSurface(m_renderer, scanlines);
+    SDL_DestroySurface(scanlines);
+
+    if (m_crt_scanlines == nullptr)
+    {
+        SDL_Log("CRT scanline texture failed: %s", SDL_GetError());
+        destroyCrtResources();
+        return false;
+    }
+
+    SDL_SetTextureBlendMode(m_crt_scanlines, SDL_BLENDMODE_BLEND);
+    SDL_SetTextureScaleMode(m_crt_scanlines, SDL_SCALEMODE_NEAREST);
+
+    for (int j = 0; j <= CRT_MESH_ROWS; ++j)
+    {
+        for (int i = 0; i <= CRT_MESH_COLS; ++i)
+        {
+            const float u = static_cast<float>(i) / CRT_MESH_COLS;
+            const float v = static_cast<float>(j) / CRT_MESH_ROWS;
+
+            // Centered coordinates in [-1, 1]; r2 is 0 at the middle of
+            // the screen, 1 at the edge midpoints and 2 at the corners.
+            const float nx = 2.f * u - 1.f;
+            const float ny = 2.f * v - 1.f;
+            const float r2 = nx * nx + ny * ny;
+
+            // Corners are pulled in the hardest while the edge midpoints
+            // stay on the border: the classic bulging tube outline.
+            const float bulge = (1.f + CRT_CURVATURE) / (1.f + CRT_CURVATURE * r2);
+
+            // The vignette darkens with the distance from the centre.
+            const float brightness = 1.f - CRT_VIGNETTE * std::pow(r2 * 0.5f, 1.2f);
+
+            SDL_Vertex vertex{};
+            vertex.position = {(nx * bulge * 0.5f + 0.5f) * static_cast<float>(m_width),
+                               (ny * bulge * 0.5f + 0.5f) * static_cast<float>(m_height)};
+            vertex.color = {brightness, brightness, brightness, 1.f};
+            vertex.tex_coord = {u, v};
+
+            m_crt_mesh.push_back(vertex);
+        }
+    }
+
+    for (int j = 0; j < CRT_MESH_ROWS; ++j)
+    {
+        for (int i = 0; i < CRT_MESH_COLS; ++i)
+        {
+            const int top_left = j * (CRT_MESH_COLS + 1) + i;
+            const int bottom_left = top_left + CRT_MESH_COLS + 1;
+
+            m_crt_indices.insert(m_crt_indices.end(), {top_left, top_left + 1, bottom_left,
+                                                       top_left + 1, bottom_left + 1, bottom_left});
+        }
+    }
+
+    return true;
+}
+
+void Window::destroyCrtResources()
+{
+    if (m_crt_scanlines)
+    {
+        SDL_DestroyTexture(m_crt_scanlines);
+        m_crt_scanlines = nullptr;
+    }
+    if (m_crt_scene)
+    {
+        SDL_DestroyTexture(m_crt_scene);
+        m_crt_scene = nullptr;
+    }
+
+    m_crt_mesh.clear();
+    m_crt_indices.clear();
+}
+
 Vec2f Window::getMousePosition() const
 {
     float window_x = 0.f;
@@ -93,6 +222,13 @@ Vec2f Window::getMousePosition() const
 
 void Window::clear(const Color& color)
 {
+    // With the CRT filter on, the whole frame renders offscreen and
+    // display() maps it onto the curved tube.
+    if (m_crt)
+    {
+        SDL_SetRenderTarget(m_renderer, m_crt_scene);
+    }
+
     SDL_SetRenderDrawColor(m_renderer, color.r, color.g, color.b, color.a);
     SDL_RenderClear(m_renderer);
 }
@@ -129,6 +265,22 @@ void Window::drawText(const Vec2f& pos, const std::string& text, const Color& co
 
 void Window::display()
 {
+    if (m_crt)
+    {
+        // Reset any shake offset so the compositing never moves, warp
+        // the scene onto the tube and lay the scanlines over the glass:
+        // straight and evenly spaced, unlike the curved image below.
+        SDL_SetRenderViewport(m_renderer, nullptr);
+
+        SDL_SetRenderTarget(m_renderer, nullptr);
+        SDL_SetRenderDrawColor(m_renderer, 0, 0, 0, 255);
+        SDL_RenderClear(m_renderer);
+        SDL_RenderGeometry(m_renderer, m_crt_scene, m_crt_mesh.data(),
+                           static_cast<int>(m_crt_mesh.size()), m_crt_indices.data(),
+                           static_cast<int>(m_crt_indices.size()));
+        SDL_RenderTexture(m_renderer, m_crt_scanlines, nullptr, nullptr);
+    }
+
     SDL_RenderPresent(m_renderer);
 
     // Any shake offset lasts a single frame.

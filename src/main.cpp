@@ -99,6 +99,9 @@ int main(int argc, char** argv)
             SDL_free(pref_path);
         }
 
+        // On unless the player saved it off; load_settings overrides.
+        window.setCrtFilter(true);
+
         gc.load_settings();
 
         // Smoke runs skip the menu so the frames exercise real gameplay.

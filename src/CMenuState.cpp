@@ -22,7 +22,7 @@ void CMenuState::init()
         300.f);
 
     this->options_menu = std::make_unique<CMenu>(
-        this->gc, std::vector<std::string>{"", "", "", "", "BACK"}, game::WIDTH / 2.f, 280.f);
+        this->gc, std::vector<std::string>{"", "", "", "", "", "BACK"}, game::WIDTH / 2.f, 280.f);
 
     this->refresh_options();
 }
@@ -82,9 +82,12 @@ int CMenuState::update(const float)
             this->gc->window->setFullscreen(!this->gc->window->isFullscreen());
             break;
         case 2:
-            this->gc->set_music_volume(this->gc->get_music_volume() + 10.f * step);
+            this->gc->set_crt_filter(!this->gc->get_crt_filter());
             break;
         case 3:
+            this->gc->set_music_volume(this->gc->get_music_volume() + 10.f * step);
+            break;
+        case 4:
             this->gc->set_fx_volume(this->gc->get_fx_volume() + 10.f * step);
             break;
         }
@@ -104,12 +107,15 @@ int CMenuState::update(const float)
         this->gc->window->setFullscreen(!this->gc->window->isFullscreen());
         break;
     case 2:
-        this->gc->set_music_volume(next_volume(this->gc->get_music_volume()));
+        this->gc->set_crt_filter(!this->gc->get_crt_filter());
         break;
     case 3:
-        this->gc->set_fx_volume(next_volume(this->gc->get_fx_volume()));
+        this->gc->set_music_volume(next_volume(this->gc->get_music_volume()));
         break;
     case 4:
+        this->gc->set_fx_volume(next_volume(this->gc->get_fx_volume()));
+        break;
+    case 5:
         this->in_options = false;
         break;
     }
@@ -150,10 +156,12 @@ void CMenuState::refresh_options()
                                   std::string("SCALE: ") + (letterbox ? "LETTERBOX" : "STRETCH"));
     this->options_menu->set_entry(1, std::string("FULLSCREEN: ") +
                                          (this->gc->window->isFullscreen() ? "ON" : "OFF"));
+    this->options_menu->set_entry(2, std::string("CRT FILTER: ") +
+                                         (this->gc->get_crt_filter() ? "ON" : "OFF"));
     this->options_menu->set_entry(
-        2, "MUSIC VOL: " + std::to_string(static_cast<int>(this->gc->get_music_volume())));
+        3, "MUSIC VOL: " + std::to_string(static_cast<int>(this->gc->get_music_volume())));
     this->options_menu->set_entry(
-        3, "FX VOL: " + std::to_string(static_cast<int>(this->gc->get_fx_volume())));
+        4, "FX VOL: " + std::to_string(static_cast<int>(this->gc->get_fx_volume())));
 }
 
 void CMenuState::clear() {}

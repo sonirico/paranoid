@@ -119,6 +119,18 @@ void CGameContainer::set_fx_volume(float volume)
     this->save_settings();
 }
 
+bool CGameContainer::get_crt_filter() const
+{
+    return this->window->isCrtFilter();
+}
+
+void CGameContainer::set_crt_filter(bool enabled)
+{
+    this->window->setCrtFilter(enabled);
+
+    this->save_settings();
+}
+
 void CGameContainer::load_settings()
 {
     if (this->data_dir.empty())
@@ -135,6 +147,15 @@ void CGameContainer::load_settings()
     {
         this->music_volume = std::clamp(music_vol, 0.f, 100.f);
         this->fx_volume = std::clamp(fx_vol, 0.f, 100.f);
+
+        // Settings saved before the CRT filter existed lack the third
+        // field; the window then keeps whatever main defaulted it to.
+        int crt = 0;
+
+        if (file >> crt)
+        {
+            this->window->setCrtFilter(crt != 0);
+        }
     }
 }
 
@@ -149,6 +170,7 @@ void CGameContainer::save_settings()
 
     if (file)
     {
-        file << this->music_volume << ' ' << this->fx_volume;
+        file << this->music_volume << ' ' << this->fx_volume << ' '
+             << (this->window->isCrtFilter() ? 1 : 0);
     }
 }

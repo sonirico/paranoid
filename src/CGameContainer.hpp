@@ -46,6 +46,10 @@ class CGameContainer
     float get_fx_volume() const;
     void set_fx_volume(float volume);
 
+    // The window's CRT filter; the setter applies and persists.
+    bool get_crt_filter() const;
+    void set_crt_filter(bool enabled);
+
     // Volumes live in <data_dir>/settings; no-ops while data_dir is unset.
     void load_settings();
     void save_settings();
