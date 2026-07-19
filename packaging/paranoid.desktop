@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Paranoid
+Comment=Break the wall, catch the capsules, chase the high score
+Exec=@BINDIR@/paranoid
+Icon=paranoid
+Terminal=false
+Categories=Game;ArcadeGame;
+Keywords=arkanoid;breakout;bricks;arcade;
+StartupWMClass=paranoid
