@@ -63,7 +63,11 @@ void Sprite::draw(Window& target) const
     const SDL_FRect src{
         static_cast<float>(m_textureRect.left), static_cast<float>(m_textureRect.top),
         static_cast<float>(m_textureRect.width), static_cast<float>(m_textureRect.height)};
-    const SDL_FRect dst{bounds.left, bounds.top, bounds.width, bounds.height};
+    // Snapped to whole pixels: a fractional destination makes GPU
+    // renderers sample half a texel outside the source rect, bleeding
+    // the atlas neighbor into the sprite's edge.
+    const SDL_FRect dst{SDL_floorf(bounds.left + 0.5f), SDL_floorf(bounds.top + 0.5f), bounds.width,
+                        bounds.height};
 
     SDL_RenderTexture(target.getRenderer(), m_texture->get(), &src, &dst);
 }
